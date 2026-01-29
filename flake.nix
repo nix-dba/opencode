@@ -34,6 +34,7 @@
         exec podman run --userns=keep-id --rm=true -ti --tmpfs /tmp \
           -v "$PWD:/data" -v "$HOME/.config/opencode:/config" --workdir /data \
           -e OPENCODE_CONFIG_DIR=/config \
+          -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
           ghcr.io/anomalyco/opencode:latest "$@"
       '';
     };
