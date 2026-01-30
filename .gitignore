@@ -1,4 +1,2 @@
-.bun
 .cache
-.config
-.local
+.nix-portable

@@ -22,7 +22,7 @@
             "$HOME/.config/containers/policy.json"
         fi
 
-        for entry in ".bun" ".cache" ".config" ".local"; do
+        for entry in ".nix-portable" ".cache"; do
           grep -q "^$entry$" .gitignore 2>/dev/null || echo "$entry" >> .gitignore
         done
 
@@ -30,22 +30,24 @@
         mkdir -p "$HOME/.locale/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
+        
+        CONTAINER="ghcr.io/nix-dba/opencode:dev"
 
-        podman pull ghcr.io/anomalyco/opencode:latest
+        podman pull $CONTAINER
         exec podman run \
-          --userns=keep-id:uid=$(id -u),gid=$(id -g) \
-          --user=$(id -u):$(id -g) \
+          --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
+          --user="$(id -u):$(id -g)" \
           --rm=true \
           -ti \
           --tmpfs /tmp \
-          -v "$PWD:/data" \
-          -v $HOME/.config/opencode:/home/developer/.config/opencode:Z \
-          -v $HOME/.cache/opencode:/home/developer/.cache/opencode:Z \
-          -v $HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z \
-          -v $HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z \
-          --workdir /data \
+          -v "$PWD:/workspace" \
+          -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
+          -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
+          -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
+          -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
+          --workdir /workspace \
           -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
-          ghcr.io/anomalyco/opencode:latest "$@"
+          $CONTAINER "$@"
       '';
     };
   in {
