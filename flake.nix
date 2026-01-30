@@ -26,14 +26,24 @@
           grep -q "^$entry$" .gitignore 2>/dev/null || echo "$entry" >> .gitignore
         done
 
-        if [ ! -d "$HOME/.config/opencode" ]; then
-          mkdir -p "$HOME/.config/opencode"
-        fi
+        mkdir -p "$HOME/.config/opencode"
+        mkdir -p "$HOME/.locale/share/opencode"
+        mkdir -p "$HOME/.local/state/opencode"
+        mkdir -p "$HOME/.cache/opencode"
 
         podman pull ghcr.io/anomalyco/opencode:latest
-        exec podman run --userns=keep-id --rm=true -ti --tmpfs /tmp \
-          -v "$PWD:/data" -v "$HOME/.config/opencode:/config" --workdir /data \
-          -e OPENCODE_CONFIG_DIR=/config \
+        exec podman run \
+          --userns=keep-id:uid=$(id -u),gid=$(id -g) \
+          --user=$(id -u):$(id -g) \
+          --rm=true \
+          -ti \
+          --tmpfs /tmp \
+          -v "$PWD:/data" \
+          -v $HOME/.config/opencode:/home/developer/.config/opencode:Z \
+          -v $HOME/.cache/opencode:/home/developer/.cache/opencode:Z \
+          -v $HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z \
+          -v $HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z \
+          --workdir /data \
           -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
           ghcr.io/anomalyco/opencode:latest "$@"
       '';
