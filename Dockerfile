@@ -10,7 +10,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh -s -- -y
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN wget https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz \
     && tar -xvf zellij-x86_64-unknown-linux-musl.tar.gz \
