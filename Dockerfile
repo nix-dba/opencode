@@ -6,8 +6,10 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl git ca-certificates sudo xz-utils binutils wget vim \
+    curl git ca-certificates sudo xz-utils binutils wget vim poppler-utils rustup \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh 
 
 RUN wget https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz \
     && tar -xvf zellij-x86_64-unknown-linux-musl.tar.gz \
@@ -50,6 +52,9 @@ EOF
 RUN cat > /home/developer/.config/zellij/layout.kdl << 'EOF'
 layout {
     pane command="opencode"
+    pane size=1 borderless=true {
+        plugin location="zellij:status-bar"
+    }
 }
 EOF
 
