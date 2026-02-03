@@ -125,6 +125,33 @@ top-k = 20
 flash-attn = 1
 presence-penalty = 0.0
 split-mode = none
+
+[Devstral-Small-2]
+hf-repo = unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF
+hf-file = Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf
+model = /models/Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf
+mmproj-url = https://huggingface.co/unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF/resolve/main/mmproj-F16.gguf
+mmproj = /models/Devstral-Small-2-24B-Instruct-2512-mmproj-F16.gguf
+jinja = 1
+ctx-size = 65536
+temp = 0.15
+min-p = 0.01
+split-mode = layer
+main-gpu = 0
+tensor-split = 4,1
+
+[Qwen3-Coder-Next]
+hf-repo = unsloth/Qwen3-Coder-Next-GGUF
+hf-file = Qwen3-Coder-Next-UD-Q4_K_XL.gguf
+model = /models/Qwen3-Coder-Next-UD-Q4_K_XL.gguf
+jinja = 1
+ctx-size = 65536
+temp = 1.0
+top-p = 0.95
+min-p = 0.01
+top-k = 40
+main-gpu = 0
+split-mode = layer
 ```
 
 llama-cpp server is started with folowing arg in my k8s server:
