@@ -6,7 +6,7 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl git ca-certificates sudo xz-utils binutils wget vim poppler-utils \
+    curl git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
