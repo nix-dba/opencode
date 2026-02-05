@@ -34,23 +34,41 @@
         CONTAINER="ghcr.io/nix-dba/opencode:dev"
 
         podman pull $CONTAINER
-        exec podman run \
-          --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
-          --user="$(id -u):$(id -g)" \
-          --rm=true \
-          -ti \
-          --tmpfs /tmp \
-          -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
-          -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-          -v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY \
-          -v "$PWD:/workspace" \
-          -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
-          -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
-          -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
-          -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-          --workdir /workspace \
-          -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
-          $CONTAINER "$@"
+
+        if [ -n "$WAYLAND_DISPLAY" ]; then
+          exec podman run \
+            --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
+            --user="$(id -u):$(id -g)" \
+            --rm=true \
+            -ti \
+            --tmpfs /tmp \
+            -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+            -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:Z" \
+            -v "$PWD:/workspace" \
+            -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
+            -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
+            -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
+            -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
+            --workdir /workspace \
+            -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+            $CONTAINER "$@"
+        else
+          exec podman run \
+            --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
+            --user="$(id -u):$(id -g)" \
+            --rm=true \
+            -ti \
+            --tmpfs /tmp \
+            -v "$PWD:/workspace" \
+            -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
+            -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
+            -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
+            -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
+            --workdir /workspace \
+            -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+            $CONTAINER "$@"
+        fi
       '';
     };
   in {

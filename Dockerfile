@@ -6,11 +6,25 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard \
+    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+WORKDIR /tmp
+RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/releases/latest | \
+                 jq -r .tag_name) && \
+    wget https://github.com/typst/typst/releases/download/${LATEST_TYPS_TAG}/typst-x86_64-unknown-linux-musl.tar.xz && \
+    tar -xf typst-x86_64-unknown-linux-musl.tar.xz && \
+    mv typst /usr/local/bin/typst && \
+    chmod +x /usr/local/bin/typst && \
+    rm typst-x86_64-unknown-linux-musl.tar.xz && \
+    rm -rf /tmp/*
+
+RUN wget https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz && \
+    tar -xf typst-x86_64-unknown-linux-musl.tar.xz && \
+    mv typst /usr/local/bin/typst && \
+    chmod +x /usr/local/bin/typst && \
+    rm typst-x86_64-unknown-linux-musl.tar.xz && \
+    rm -rf /tmp/*
 
 RUN wget https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz \
     && tar -xvf zellij-x86_64-unknown-linux-musl.tar.gz \
@@ -47,6 +61,7 @@ RUN cat > /home/developer/.config/zellij/config.kdl << 'EOF'
 show_startup_tips false
 show_release_notes false
 default_shell "bash"
+copy_command "wl-copy"
 default_mode "locked"
 EOF
 
@@ -71,6 +86,9 @@ ENV XDG_CONFIG_HOME="/home/developer/.config"
 ENV XDG_DATA_HOME="/home/developer/.local/share"
 ENV XDG_STATE_HOME="/home/developer/.local/state"
 ENV XDG_CACHE_HOME="/home/developer/.cache"
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN opencode upgrade
 RUN chmod -R 777 /home/developer
