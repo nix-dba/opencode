@@ -43,7 +43,6 @@
             -ti \
             --tmpfs /tmp \
             -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
-            -e RUST_BACKTRACE="1" \
             -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
             -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:Z" \
             -v "$PWD:/workspace" \
