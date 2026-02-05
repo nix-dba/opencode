@@ -88,6 +88,9 @@ RUN chmod -R 777 /home/developer
 
 ENV PATH="$PATH:/home/developer/.local/bin"
 
+# fix permission issue when mounting wayland cliboard share
+ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
+
 WORKDIR /workspace
 
 #CMD ["bash"]
