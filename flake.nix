@@ -36,6 +36,7 @@
         podman pull $CONTAINER
 
         if [ -n "$WAYLAND_DISPLAY" ]; then
+          echo "We pass WAYLAND_DISPLAY to container to share clipboard with host"
           exec podman run \
             --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
             --user="$(id -u):$(id -g)" \
