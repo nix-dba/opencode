@@ -19,13 +19,6 @@ RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/release
     rm typst-x86_64-unknown-linux-musl.tar.xz && \
     rm -rf /tmp/*
 
-RUN wget https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz && \
-    tar -xf typst-x86_64-unknown-linux-musl.tar.xz && \
-    mv typst /usr/local/bin/typst && \
-    chmod +x /usr/local/bin/typst && \
-    rm typst-x86_64-unknown-linux-musl.tar.xz && \
-    rm -rf /tmp/*
-
 RUN wget https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz \
     && tar -xvf zellij-x86_64-unknown-linux-musl.tar.gz \
     && chmod +x zellij \
