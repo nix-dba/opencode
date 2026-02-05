@@ -42,6 +42,7 @@
             --rm=true \
             -ti \
             --tmpfs /tmp \
+            -e ZELLIJ_SOCKET_DIR=/tmp/zellij
             -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
             -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
             -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:Z" \
