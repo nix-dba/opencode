@@ -86,6 +86,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 RUN opencode upgrade
 RUN chmod -R 777 /home/developer
 
+ENV PATH="$PATH:/home/developer/.local/bin"
+
 WORKDIR /workspace
 
 #CMD ["bash"]
