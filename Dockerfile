@@ -14,7 +14,7 @@ RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/release
                  jq -r .tag_name) && \
     wget https://github.com/typst/typst/releases/download/${LATEST_TYPS_TAG}/typst-x86_64-unknown-linux-musl.tar.xz && \
     tar -xf typst-x86_64-unknown-linux-musl.tar.xz && \
-    mv typst /usr/local/bin/typst && \
+    mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst && \
     chmod +x /usr/local/bin/typst && \
     rm typst-x86_64-unknown-linux-musl.tar.xz && \
     rm -rf /tmp/*
