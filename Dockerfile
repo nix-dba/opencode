@@ -60,7 +60,10 @@ EOF
 
 RUN cat > /home/developer/.config/zellij/layout.kdl << 'EOF'
 layout {
-    pane command="/bin/bash -c 'opencode'"
+    pane {
+        command "/bin/bash"
+        args "-c" "opencode"
+    }
     pane size=1 borderless=true {
         plugin location="zellij:status-bar"
     }
