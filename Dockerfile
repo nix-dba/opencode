@@ -89,7 +89,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 RUN opencode upgrade
 RUN chmod -R 777 /home/developer
 
-ENV PATH="$PATH:/home/developer/.local/bin"
+ENV PATH="/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
 
 # fix permission issue when mounting wayland cliboard share
 ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
