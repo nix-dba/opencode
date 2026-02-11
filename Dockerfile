@@ -6,8 +6,7 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential pkg-config libudev-dev
 
 WORKDIR /tmp
 RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/releases/latest | \
@@ -40,6 +39,13 @@ RUN if getent group "${GROUP_ID}"; then \
 # create user
 RUN useradd -l -u "${USER_ID}" -g "${GROUP_ID}" -m -s /bin/bash developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+RUN cat >/usr/local/bin/apt <<'EOF'
+#!/bin/sh
+exec sudo /usr/bin/apt "$@"
+EOF
+
+RUN chmod +x /usr/local/bin/apt
 
 RUN curl -L https://github.com/DavHau/nix-portable/releases/latest/download/nix-portable-$(uname -m) > /usr/bin/nix-portable
 RUN chmod +x /usr/bin/nix-portable
@@ -89,7 +95,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 RUN opencode upgrade
 RUN chmod -R 777 /home/developer
 
-ENV PATH="/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
+ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
 
 # fix permission issue when mounting wayland cliboard share
 ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
