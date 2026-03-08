@@ -6,7 +6,7 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential pkg-config libudev-dev
+    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential pkg-config libudev-dev ssh sshpass
 
 WORKDIR /tmp
 RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/releases/latest | \
@@ -99,6 +99,8 @@ ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.loca
 
 # fix permission issue when mounting wayland cliboard share
 ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
+
+RUN git config --global user.name "opencode" && git config --global user.email "opencode@agent.local"
 
 WORKDIR /workspace
 
