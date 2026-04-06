@@ -101,8 +101,10 @@ ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
 
 RUN git config --global user.name "opencode" && git config --global user.email "opencode@agent.local"
 
+USER root
 ARG CACHEBUST=1
 RUN opencode upgrade
+USER developer
 
 WORKDIR /workspace
 
