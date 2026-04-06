@@ -27,6 +27,7 @@
         done
 
         mkdir -p "$HOME/.config/opencode"
+        mkdir -p "$HOME/.opencode"
         mkdir -p "$HOME/.locale/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
@@ -47,6 +48,7 @@
             -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
             -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:z" \
             -v "$PWD:/workspace" \
+            -v "$HOME/.opencode:/home/developer/.opencode:Z" \
             -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
@@ -62,6 +64,7 @@
             -ti \
             --tmpfs /tmp \
             -v "$PWD:/workspace" \
+            -v "$HOME/.opencode:/home/developer/.opencode:Z" \
             -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
