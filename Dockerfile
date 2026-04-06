@@ -92,7 +92,6 @@ ENV XDG_CACHE_HOME="/home/developer/.cache"
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-RUN opencode upgrade
 RUN chmod -R 777 /home/developer
 
 ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
@@ -101,6 +100,9 @@ ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.loca
 ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
 
 RUN git config --global user.name "opencode" && git config --global user.email "opencode@agent.local"
+
+ARG CACHEBUST=1
+RUN opencode upgrade
 
 WORKDIR /workspace
 
