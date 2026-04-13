@@ -37,7 +37,7 @@
         podman pull $CONTAINER
 
         if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-          read -r -p "Not a git repo. Initialize one here? (y/n): " answer
+          read -r -p "$PWD is not a git repo. Initialize repository now? (y/N): " answer
           case "$answer" in
             [Yy]* )
               git init
