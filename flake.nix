@@ -14,7 +14,7 @@
     
     opencodeApp = pkgs.writeShellApplication {
       name = "opencode";
-      runtimeInputs = [ pkgs.podman ];
+      runtimeInputs = [ pkgs.podman pkgs.git ];
       text = ''
         if ! test -f "$HOME/.config/containers/policy.json"; then
           mkdir -p "$HOME/.config/containers"
@@ -28,7 +28,7 @@
 
         mkdir -p "$HOME/.config/opencode"
         mkdir -p "$HOME/.opencode"
-        mkdir -p "$HOME/.locale/share/opencode"
+        mkdir -p "$HOME/.local/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
         
@@ -36,7 +36,21 @@
 
         podman pull $CONTAINER
 
-        if [ -n "$WAYLAND_DISPLAY" ]; then
+        if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+          read -p "Not a git repo. Initialize one here? (y/n): " answer
+          case "$answer" in
+            [Yy]* )
+              git init
+              git add --all .
+              echo "Initialized empty git repository"
+              ;;
+            * )
+              echo "Skipped git init"
+              ;;
+          esac
+        fi
+
+        if [ -v WAYLAND_DISPLAY ]; then
           echo "We pass WAYLAND_DISPLAY to container to share clipboard with host"
           exec podman run \
             --userns="keep-id:uid=$(id -u),gid=$(id -g)" \
