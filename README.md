@@ -137,3 +137,25 @@ app:
     - --models-preset 
     - /models/config.ini
 ```
+
+#### Relay
+
+Using nginx to relay our tailscale llama.cpp http endpoint to the local network by creating `/etc/nginx/nginx.conf` with the following content:
+
+```
+http {
+  server {
+    listen 8080;
+    server_name _;
+
+    location / {
+      proxy_pass https://llama-cpp.$TAILNET_ID.ts.net;
+      proxy_set_header Host llama-cpp.$TAILNET_ID.ts.net;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto http;
+      proxy_ssl_server_name on;
+    }
+  }
+}
+```
