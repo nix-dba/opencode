@@ -12,6 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
       - name: Update flake.lock
         id: update
         uses: DeterminateSystems/update-flake-lock@v28
@@ -21,7 +24,7 @@ jobs:
             Automated update of `flake.lock`.
 
             Run `nix flake update` and `nix run` to test.
-          labels: "nix,flake-lock,automated"
+          pr-labels: "nix,flake-lock,automated"
 
       - name: Enable auto-merge
         if: steps.update.outputs.pull-request-number != ''
