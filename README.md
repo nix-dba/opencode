@@ -18,7 +18,7 @@ nix run github:nix-dba/opencode --refresh
 
 ## Config
 
-Example config for `~/.config/opencode/opencode.json`
+Example config for `~/.config/opencode/opencode.json` when using the llama-cpp endpoint direct.
 
 ```
 {
@@ -67,6 +67,30 @@ Example config for `~/.config/opencode/opencode.json`
 }
 ```
 
+or when integrated into `omni-route`:
+
+```
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "omniroute": {
+      "options": {
+        "baseURL": "https://omni-route.k8s.lan/v1",
+        "apiMode": "chat",
+        "refreshOnList": true,
+        "modelCacheTtl": 300000,
+        "modelMetadata": {
+          "gpu/Qwen3.6-35B-A3B-Q4-KV8": {
+            "contextWindow": 262144
+          }
+        }
+      }
+    }
+  },
+  "plugin": ["@cedrugs/opencode-omniauth"]
+}
+```
+
 ### LLaMa.cpp
 
 Example config for my NVIDIA RTX 3090:
@@ -93,7 +117,7 @@ temp = 0.7
 min-p = 0.0
 top-p = 0.95
 top-k = 20
-presence-penalty = 0.0
+presence-penalty = 1.5
 repeat-penalty = 1.0
 main-gpu = 0
 cache-type-k = q8_0
@@ -115,6 +139,23 @@ cache-type-v = q8_0
 no-mmproj = 1
 flash-attn = 1
 ctx-checkpoints = 16 # llama-cpp workaround for high ram usage
+split-mode = none # use main gpu only
+
+[Qwen3.6-35B-A3B-Q4-KV8]
+hf-repo = unsloth/Qwen3.6-35B-A3B-GGUF
+hf-file = Qwen3.6-35B-A3B-UD-Q4_K_S.gguf
+jinja = 1
+ctx-size = 262144
+temp = 0.7
+min-p = 0.0
+top-p = 0.95
+top-k = 20
+presence-penalty = 1.5
+repeat-penalty = 1.0
+main-gpu = 0
+cache-type-k = q8_0
+cache-type-v = q8_0
+no-mmproj = 1
 split-mode = none # use main gpu only
 ```
 
