@@ -31,7 +31,6 @@
         mkdir -p "$HOME/.local/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
-        mkdir -p "$HOME/.cache/opencode/containers"
         
         CONTAINER="ghcr.io/nix-dba/opencode:dev"
 
@@ -59,9 +58,6 @@
             --rm=true \
             -ti \
             --tmpfs /tmp \
-            --device=/dev/fuse \
-            --security-opt label=disable \
-            --cap-add=SYS_ADMIN \
             -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
             -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/home/developer/.xdg-runtime/$WAYLAND_DISPLAY:z" \
             -v "$PWD:/workspace" \
@@ -70,8 +66,9 @@
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-            -v "$HOME/.cache/opencode/containers:/home/developer/.local/share/containers" \
+            -v "/run/user/$(id -u)/podman:/run/user/$(id -u)/podman:rw" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
+            -e CONTAINER_HOST="unix:///run/user/$(id -u)/podman/podman.sock" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
             $CONTAINER "$@"
@@ -82,17 +79,15 @@
             --rm=true \
             -ti \
             --tmpfs /tmp \
-            --device=/dev/fuse \
-            --security-opt label=disable \
-            --cap-add=SYS_ADMIN \
             -v "$PWD:/workspace" \
             -v "$HOME/.opencode:/home/developer/.opencode:Z" \
             -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-            -v "$HOME/.local/share/containers:/home/developer/.local/share/containers" \
+            -v "/run/user/$(id -u)/podman:/run/user/$(id -u)/podman:rw" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
+            -e CONTAINER_HOST="unix:///run/user/$(id -u)/podman/podman.sock" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
             $CONTAINER "$@"

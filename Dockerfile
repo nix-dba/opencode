@@ -40,9 +40,6 @@ RUN if getent group "${GROUP_ID}"; then \
 RUN useradd -l -u "${USER_ID}" -g "${GROUP_ID}" -m -s /bin/bash developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-RUN echo "developer:100000:65536" >> /etc/subuid && \
-    echo "developer:100000:65536" >> /etc/subgid
-
 RUN cat >/usr/local/bin/apt <<'EOF'
 #!/bin/sh
 exec sudo /usr/bin/apt "$@"
