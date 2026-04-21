@@ -16,12 +16,6 @@
       name = "opencode";
       runtimeInputs = [ pkgs.podman pkgs.git ];
       text = ''
-        if ! test -f "$HOME/.config/containers/policy.json"; then
-          mkdir -p "$HOME/.config/containers"
-          install -m 644 ${pkgs.skopeo.src}/default-policy.json \
-            "$HOME/.config/containers/policy.json"
-        fi
-
         for entry in ".nix-portable" ".cache"; do
           grep -q "^$entry$" .gitignore 2>/dev/null || echo "$entry" >> .gitignore
         done
@@ -31,7 +25,7 @@
         mkdir -p "$HOME/.local/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
-        
+
         CONTAINER="ghcr.io/nix-dba/opencode:dev"
 
         podman pull $CONTAINER
@@ -66,9 +60,7 @@
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-            -v "/run/user/$(id -u)/podman:/run/user/$(id -u)/podman:rw" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
-            -e CONTAINER_HOST="unix:///run/user/$(id -u)/podman/podman.sock" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
             $CONTAINER "$@"
@@ -85,9 +77,7 @@
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-            -v "/run/user/$(id -u)/podman:/run/user/$(id -u)/podman:rw" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
-            -e CONTAINER_HOST="unix:///run/user/$(id -u)/podman/podman.sock" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
             $CONTAINER "$@"
