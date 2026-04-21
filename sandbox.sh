@@ -78,4 +78,4 @@ bwrap \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
   \
-  "${@:-bash}"
+  "${@:-opencode}"

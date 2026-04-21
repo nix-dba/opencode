@@ -7,7 +7,7 @@ Run opencode in sandboxed bubblewrap via nix.
 In your repository root run:
 
 ```sh
-nix run github:nix-dba/opencode --refresh -- opencode
+nix run github:nix-dba/opencode --refresh
 ```
 
 ## Config
