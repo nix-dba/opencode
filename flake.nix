@@ -63,8 +63,7 @@
             --security-opt label=disable \
             --cap-add=SYS_ADMIN \
             -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
-            -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-            -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:z" \
+            -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/home/developer/.xdg-runtime/$WAYLAND_DISPLAY:z" \
             -v "$PWD:/workspace" \
             -v "$HOME/.opencode:/home/developer/.opencode:Z" \
             -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
