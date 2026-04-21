@@ -97,13 +97,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
 
-RUN LATEST_JUST_TAG=$(wget -qO- https://api.github.com/repos/casey/just/releases/latest | \
-                 jq -r .tag_name) && \
-    wget https://github.com/casey/just/releases/download/${LATEST_JUST_TAG}/just-${LATEST_JUST_TAG}-x86_64-unknown-linux-musl.tar.gz && \
-    tar -xf just-${LATEST_JUST_TAG}-x86_64-unknown-linux-musl.tar.gz && \
-    mv just /usr/local/bin/just && \
-    chmod +x /usr/local/bin/just && \
-    rm just-${LATEST_JUST_TAG}-x86_64-unknown-linux-musl.tar.gz
+USER root
+RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+USER developer
 
 RUN chmod -R 777 /home/developer
 
