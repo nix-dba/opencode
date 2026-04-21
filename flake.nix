@@ -27,6 +27,7 @@
         done
 
         mkdir -p "$HOME/.config/opencode"
+        mkdir -p "$HOME/.local/share/containers"
         mkdir -p "$HOME/.opencode"
         mkdir -p "$HOME/.local/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
@@ -58,6 +59,9 @@
             --rm=true \
             -ti \
             --tmpfs /tmp \
+            --device=/dev/fuse \
+            --security-opt label=disable \
+            --cap-add=SYS_ADMIN \
             -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
             -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
             -v "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:z" \
@@ -67,6 +71,7 @@
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
+            -v "$HOME/.local/share/containers:/home/developer/.local/share/containers:Z" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
@@ -78,12 +83,16 @@
             --rm=true \
             -ti \
             --tmpfs /tmp \
+            --device=/dev/fuse \
+            --security-opt label=disable \
+            --cap-add=SYS_ADMIN \
             -v "$PWD:/workspace" \
             -v "$HOME/.opencode:/home/developer/.opencode:Z" \
             -v "$HOME/.config/opencode:/home/developer/.config/opencode:Z" \
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
+            -v "$HOME/.local/share/containers:/home/developer/.local/share/containers:Z" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \

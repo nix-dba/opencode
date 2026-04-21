@@ -6,7 +6,7 @@ ARG GROUP_ID=1000
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential pkg-config libudev-dev ssh sshpass
+    curl jq tar git ca-certificates sudo xz-utils binutils wget vim poppler-utils wl-clipboard python3 python3-venv python3-virtualenv procps build-essential pkg-config libudev-dev ssh sshpass podman fuse-overlayfs
 
 WORKDIR /tmp
 RUN LATEST_TYPS_TAG=$(wget -qO- https://api.github.com/repos/typst/typst/releases/latest | \
@@ -39,6 +39,9 @@ RUN if getent group "${GROUP_ID}"; then \
 # create user
 RUN useradd -l -u "${USER_ID}" -g "${GROUP_ID}" -m -s /bin/bash developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+RUN echo "developer:100000:65536" >> /etc/subuid && \
+    echo "developer:100000:65536" >> /etc/subgid
 
 RUN cat >/usr/local/bin/apt <<'EOF'
 #!/bin/sh
@@ -91,6 +94,8 @@ ENV XDG_CACHE_HOME="/home/developer/.cache"
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+RUN cargo install just
 
 RUN chmod -R 777 /home/developer
 
