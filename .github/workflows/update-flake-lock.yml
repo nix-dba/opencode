@@ -1,4 +1,7 @@
 name: Update Flake Lock
+# requirements: 
+# - Settings : Actions : General : Read and write permissions
+# - Settings : Actions : General : Allow GitHub Actions to create and approve pull requests 
 
 on:
   schedule:
