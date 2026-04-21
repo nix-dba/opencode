@@ -1,6 +1,6 @@
 # OpenCode
 
-Run opencode in sandboxed container via nix.
+Run opencode in sandboxed bubblewrap via nix.
 
 ## Usage
 
