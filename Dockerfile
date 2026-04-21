@@ -95,11 +95,11 @@ ENV XDG_CACHE_HOME="/home/developer/.cache"
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
+
 RUN cargo install just
 
 RUN chmod -R 777 /home/developer
-
-ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
 
 # fix permission issue when mounting wayland cliboard share
 ENV ZELLIJ_SOCKET_DIR=/tmp/zellij
