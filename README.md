@@ -7,13 +7,7 @@ Run opencode in sandboxed container via nix.
 In your repository root run:
 
 ```sh
-nix run github:nix-dba/opencode
-```
-
-to update the flake use:
-
-```sh
-nix run github:nix-dba/opencode --refresh
+nix run github:nix-dba/opencode --refresh -- opencode
 ```
 
 ## Config
