@@ -60,6 +60,8 @@ bwrap \
   --ro-bind-try /etc/resolv.conf /etc/resolv.conf \
   --ro-bind-try /etc/ssl /etc/ssl \
   --ro-bind-try /etc/ca-certificates /etc/ca-certificates \
+  --ro-bind-try /etc/nix /etc/nix \
+  --ro-bind-try /etc/static/nix /etc/static/nix \
   \
   --dir "$HOME" \
   --setenv HOME "$HOME" \
@@ -70,6 +72,7 @@ bwrap \
   --bind-try "$HOME/.local/state/opencode" "$HOME/.local/state/opencode" \
   --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode" \
   --bind-try "$HOME/.opencode" "$HOME/.opencode" \
+  --bind-try "$HOME/.conig/nix" "$HOME/.config/nix" \
   "${WORKSPACE_BINDS[@]}" \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
