@@ -31,7 +31,7 @@
         mkdir -p "$HOME/.local/share/opencode"
         mkdir -p "$HOME/.local/state/opencode"
         mkdir -p "$HOME/.cache/opencode"
-        mkdir -p "$HOME/.cache/opencode/containers"
+        mkdir -p "$HOME/.cache/opencode-containers"
         
         CONTAINER="ghcr.io/nix-dba/opencode:dev"
 
@@ -70,7 +70,7 @@
             -v "$HOME/.cache/opencode:/home/developer/.cache/opencode:Z" \
             -v "$HOME/.local/share/opencode:/home/developer/.local/share/opencode:Z" \
             -v "$HOME/.local/state/opencode:/home/developer/.local/state/opencode:Z" \
-            -v "$HOME/.cache/opencode/containers:/home/developer/.local/share/containers:Z" \
+            -v "$HOME/.cache/opencode-containers:/home/developer/.local/share/containers:Z" \
             -v "/etc/ssl/certs:/etc/ssl/certs:ro" \
             --workdir /workspace \
             -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
