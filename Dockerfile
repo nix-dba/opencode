@@ -55,6 +55,8 @@ RUN chmod +x /usr/bin/nix-portable
 
 USER developer
 
+RUN mkdir -p /home/developer/.xdg-runtime
+
 RUN mkdir -p /home/developer/.cache/zellij/$(zellij --version | cut -d ' ' -f 2) \
     && mkdir -p /home/developer/.config/zellij \
     && touch /home/developer/.cache/zellij/$(zellij --version | cut -d ' ' -f 2)/seen_release_notes
@@ -91,6 +93,7 @@ ENV XDG_CONFIG_HOME="/home/developer/.config"
 ENV XDG_DATA_HOME="/home/developer/.local/share"
 ENV XDG_STATE_HOME="/home/developer/.local/state"
 ENV XDG_CACHE_HOME="/home/developer/.cache"
+ENV XDG_RUNTIME_DIR="/home/developer/.xdg-runtime"
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
