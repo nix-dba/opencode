@@ -97,7 +97,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ENV PATH="/usr/local/bin:/home/developer/.cargo/bin/:$PATH:/home/developer/.local/bin"
 
-RUN cargo install just
+RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
 
 RUN chmod -R 777 /home/developer
 
