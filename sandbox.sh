@@ -48,6 +48,7 @@ bwrap \
   --ro-bind /bin /bin \
   --ro-bind-try /sbin /sbin \
   --ro-bind-try /nix /nix \
+  --ro-bind /sys /sys \
   --proc /proc \
   --dev /dev \
   --tmpfs /tmp \
@@ -59,11 +60,19 @@ bwrap \
   \
   --ro-bind-try /etc/resolv.conf /etc/resolv.conf \
   --ro-bind-try /etc/ssl /etc/ssl \
+  --ro-bind-try /etc/pki /etc/pki \
   --ro-bind-try /etc/ca-certificates /etc/ca-certificates \
   --ro-bind-try /etc/nix /etc/nix \
-  --ro-bind-try /etc/static/nix /etc/static/nix \
+  --ro-bind-try /etc/static /etc/static \
+  --ro-bind-try /etc/alternatives /etc/alternatives \
+  --ro-bind-try /etc/passwd /etc/passwd \
+  --ro-bind-try /etc/group /etc/group \
+  --ro-bind-try /etc/machine-id /etc/machine-id \
+  --ro-bind-try /etc/subuid /etc/subuid \
+  --ro-bind-try /etc/subgid /etc/subgid \
   \
   --dir "$HOME" \
+  --dir "${XDG_RUNTIME_DIR:-/run/user/$UID}" \
   --setenv HOME "$HOME" \
   --chdir "$PWD" \
   \
@@ -77,6 +86,7 @@ bwrap \
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig" \
   --bind-try "$HOME/.cargo" "$HOME/.cargo" \
   --bind-try "$HOME/.local/share/containers" "$HOME/.local/share/containers" \
+  --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts" \
   "${WORKSPACE_BINDS[@]}" \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
