@@ -72,7 +72,11 @@ bwrap \
   --bind-try "$HOME/.local/state/opencode" "$HOME/.local/state/opencode" \
   --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode" \
   --bind-try "$HOME/.opencode" "$HOME/.opencode" \
-  --bind-try "$HOME/.config/nix" "$HOME/.config/nix" \
+  --ro-bind-try "$HOME/.config/nix" "$HOME/.config/nix" \
+  --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
+  --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig" \
+  --bind-try "$HOME/.cargo" "$HOME/.cargo" \
+  --bind-try "$HOME/.local/share/containers" "$HOME/.local/share/containers" \
   "${WORKSPACE_BINDS[@]}" \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
