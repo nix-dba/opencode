@@ -15,7 +15,7 @@
 
     sandbox = pkgs.writeShellApplication {
       name = "sandbox";
-      runtimeInputs = [ pkgs.bash pkgs.bubblewrap pkgs.bun llm-agents.packages.${system}.opencode llm-agents.packages.${system}.skills-installer pkgs.git pkgs.wl-clipboard ];
+      runtimeInputs = [ pkgs.bash pkgs.bubblewrap pkgs.bun llm-agents.packages.${system}.opencode llm-agents.packages.${system}.skills-installer pkgs.git pkgs.wl-clipboard pkgs.podman ];
       text = builtins.readFile ./sandbox.sh;
     };
   in {
