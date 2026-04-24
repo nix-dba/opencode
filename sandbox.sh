@@ -85,7 +85,6 @@ bwrap \
   --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig" \
   --bind-try "$HOME/.cargo" "$HOME/.cargo" \
-  --bind-try "$HOME/.local/share/containers" "$HOME/.local/share/containers" \
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts" \
   "${WORKSPACE_BINDS[@]}" \
   --setenv TMPDIR /tmp \
