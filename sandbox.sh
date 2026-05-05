@@ -37,6 +37,16 @@ else
   WAYLAND_BINDS=()
 fi
 
+read -r -p "Enable experimental plan mode? (y/N): " plan_answer
+PLAN_MODE_ARG=()
+case "$plan_answer" in
+  [YyjJ]* )
+    PLAN_MODE_ARG=(--setenv OPENCODE_EXPERIMENTAL_PLAN_MODE "1")
+    ;;
+  * )
+    ;;
+esac
+
 bwrap \
   --unshare-all \
   --share-net \
@@ -91,6 +101,6 @@ bwrap \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
   --setenv OPENCODE_EXPERIMENTAL "1" \
-  --setenv OPENCODE_EXPERIMENTAL_PLAN_MODE "1" \
+  "${PLAN_MODE_ARG[@]}" \
   \
   "${@:-opencode}"
