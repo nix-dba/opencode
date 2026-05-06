@@ -38,10 +38,10 @@ else
 fi
 
 read -r -p "Enable experimental plan mode? (y/N): " plan_answer
-PLAN_MODE_ARG=()
+EXPERIMENTAL_ARGS=()
 case "$plan_answer" in
   [YyjJ]* )
-    PLAN_MODE_ARG=(--setenv OPENCODE_EXPERIMENTAL_PLAN_MODE "1")
+    EXPERIMENTAL_ARGS=(--setenv OPENCODE_EXPERIMENTAL "1" --setenv OPENCODE_EXPERIMENTAL_PLAN_MODE "1")
     ;;
   * )
     ;;
@@ -100,7 +100,6 @@ bwrap \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
-  --setenv OPENCODE_EXPERIMENTAL "1" \
-  "${PLAN_MODE_ARG[@]}" \
+  "${EXPERIMENTAL_ARGS[@]}" \
   \
   "${@:-opencode}"
