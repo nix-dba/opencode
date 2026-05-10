@@ -59,6 +59,7 @@ bwrap \
   --ro-bind-try /sbin /sbin \
   --ro-bind-try /nix /nix \
   --ro-bind /sys /sys \
+  --ro-bind-try /var/run/docker.sock /var/run/docker.sock \
   --proc /proc \
   --dev /dev \
   --tmpfs /tmp \
