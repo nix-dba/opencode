@@ -101,6 +101,7 @@ bwrap \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
+  --setenv CARGO_NET_OFFLINE false \
   "${EXPERIMENTAL_ARGS[@]}" \
   \
   "${@:-opencode}"
