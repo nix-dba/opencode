@@ -70,6 +70,8 @@ bwrap \
   --setenv WAYLAND_DISPLAY "${WAYLAND_DISPLAY:-wayland-0}" \
   \
   --ro-bind-try /etc/resolv.conf /etc/resolv.conf \
+  --ro-bind-try /etc/hosts /etc/hosts \
+  --ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
   --ro-bind-try /etc/ssl /etc/ssl \
   --ro-bind-try /etc/pki /etc/pki \
   --ro-bind-try /etc/ca-certificates /etc/ca-certificates \
@@ -102,6 +104,9 @@ bwrap \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
   --setenv CARGO_NET_OFFLINE false \
+  --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt \
+  --setenv NIX_SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt \
+  --setenv GIT_SSL_CAINFO /etc/ssl/certs/ca-certificates.crt \
   "${EXPERIMENTAL_ARGS[@]}" \
   \
   "${@:-opencode}"
