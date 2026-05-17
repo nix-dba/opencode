@@ -103,6 +103,7 @@ bwrap \
   --setenv TMPDIR /tmp \
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode" \
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0 \
+  --setenv OPENCODE_DISABLE_AUTOCOMPACT 1 \
   --setenv CARGO_NET_OFFLINE false \
   --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt \
   --setenv NIX_SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt \
