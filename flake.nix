@@ -30,7 +30,10 @@
           pkgs.git
           pkgs.wl-clipboard
         ];
-        text = builtins.readFile ./sandbox.sh;
+        text = ''
+          export SKILL_DIR="${./skill}"
+          export OPENCODE_JSONC="${./opencode.jsonc}"
+        '' + builtins.readFile ./sandbox.sh;
       };
     in
     {

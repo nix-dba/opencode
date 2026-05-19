@@ -75,6 +75,7 @@ EOF
 fi
 
 mkdir -p "$HOME/.config/opencode"
+mkdir -p "$HOME/.config/opencode/skill"
 mkdir -p "$HOME/.opencode"
 mkdir -p "$HOME/.local/share/opencode"
 mkdir -p "$HOME/.local/state/opencode"
@@ -127,6 +128,22 @@ if [ "${#NET_ARGS[@]}" -gt 0 ]; then
   )
 fi
 
+# Skill bind mounts (individual, preserves user's own skills)
+SKILL_BINDS=()
+if [ -n "$SKILL_DIR" ] && [ -d "$SKILL_DIR" ]; then
+  for skill_path in "$SKILL_DIR"/*; do
+    [ -d "$skill_path" ] || continue
+    skill_name=$(basename "$skill_path")
+    SKILL_BINDS+=(--ro-bind-try "$skill_path" "$HOME/.config/opencode/skill/$skill_name")
+  done
+fi
+
+# opencode.jsonc bind mount
+OPENCODE_JSONC_BINDS=()
+if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
+  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$OPENCODE_JSONC" "$HOME/.config/opencode/opencode.jsonc")
+fi
+
 # Assemble bwrap arguments
 BWRAP_ARGS=(
   --unshare-all
@@ -177,6 +194,8 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
+  "${SKILL_BINDS[@]}"
+  "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
