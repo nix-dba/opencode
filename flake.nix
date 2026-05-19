@@ -31,8 +31,9 @@
           pkgs.wl-clipboard
         ];
         text = ''
-          export SKILL_DIR="${./skill}"
-          export OPENCODE_JSONC="${./opencode.jsonc}"
+          export SKILL_DIR="${./default/skill}"
+          export PROMPTS_DIR="${./default/prompts}"
+          export OPENCODE_JSONC="${./default/opencode.jsonc}"
         '' + builtins.readFile ./sandbox.sh;
       };
     in

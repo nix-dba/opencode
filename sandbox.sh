@@ -81,6 +81,7 @@ EOF
 fi
 
 mkdir -p "$HOME/.config/opencode"
+mkdir -p "$HOME/.config/opencode/prompts"
 mkdir -p "$HOME/.config/opencode/skill"
 mkdir -p "$HOME/.opencode"
 mkdir -p "$HOME/.local/share/opencode"
@@ -160,6 +161,16 @@ if [ -n "$SKILL_DIR" ] && [ -d "$SKILL_DIR" ]; then
   done
 fi
 
+# Prompt bind mounts (individual .md files)
+PROMPT_BINDS=()
+if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
+  for prompt_file in "$PROMPTS_DIR"/*.md; do
+    [ -f "$prompt_file" ] || continue
+    prompt_name=$(basename "$prompt_file")
+    PROMPT_BINDS+=(--ro-bind-try "$prompt_file" "$HOME/.config/opencode/prompts/$prompt_name")
+  done
+fi
+
 # opencode.jsonc bind mount
 OPENCODE_JSONC_BINDS=()
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
@@ -217,6 +228,7 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
   "${SKILL_BINDS[@]}"
+  "${PROMPT_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   --setenv TMPDIR /tmp
