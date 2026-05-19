@@ -89,6 +89,7 @@ fi
 mkdir -p "$HOME/.config/opencode"
 mkdir -p "$HOME/.config/opencode/prompts"
 mkdir -p "$HOME/.config/opencode/skill"
+mkdir -p "$HOME/.gitnexus"
 mkdir -p "$HOME/.opencode"
 mkdir -p "$HOME/.local/share/opencode"
 mkdir -p "$HOME/.local/state/opencode"
@@ -219,6 +220,7 @@ BWRAP_ARGS=(
   --ro-bind-try /etc/subgid /etc/subgid
   # home dirs
   --dir "$HOME"
+  --dir "$HOME/.gitnexus"
   --dir "${XDG_RUNTIME_DIR:-/run/user/$UID}"
   --setenv HOME "$HOME"
   --chdir "$PWD"
@@ -233,6 +235,7 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
+  --bind-try "$HOME/.gitnexus" "$HOME/.gitnexus"
   "${SKILL_BINDS[@]}"
   "${PROMPT_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
