@@ -33,11 +33,11 @@ Use the GitNexus MCP tools to understand code, assess impact, and navigate safel
 
 | Task | Read this skill file |
 |------|---------------------|
-| Understand architecture / "How does X work?" | `$HOME/.config/skill/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `$HOME/.config/skill/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `$HOME/.config/skill/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `$HOME/.config/skill/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `$HOME/.config/skill/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `$HOME/.config/skill/gitnexus/gitnexus-cli/SKILL.md` |
+| Understand architecture / "How does X work?" | `$HOME/.config/opencode/skill/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `$HOME/.config/opencode/skill/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `$HOME/.config/opencode/skill/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `$HOME/.config/opencode/skill/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `$HOME/.config/opencode/skill/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `$HOME/.config/opencode/skill/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
