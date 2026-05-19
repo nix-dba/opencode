@@ -26,6 +26,7 @@
           pkgs.bun
           llm-agents.packages.${system}.opencode
           llm-agents.packages.${system}.skills-installer
+          llm-agents.packages.${system}.gitnexus
           pkgs.git
           pkgs.wl-clipboard
         ];
