@@ -6,6 +6,7 @@ EXPERIMENTAL_ARGS=()
 NET_ARGS=(--share-net)
 DO_VERBOSE=false
 NO_GIT_INIT=false
+SKIP_GITNEXUS=false
 EXTRA_WORKSPACES=()
 
 # Parse CLI flags before any side effects
@@ -21,6 +22,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-git-init)
       NO_GIT_INIT=true
+      shift
+      ;;
+    --skip-gitnexus)
+      SKIP_GITNEXUS=true
       shift
       ;;
     --verbose|-v)
@@ -65,6 +70,7 @@ Options:
   -h, --help                Show this help message
   --experimental-plan-mode  Enable experimental plan mode
   --no-git-init             Skip git repository initialization prompt
+  --skip-gitnexus           Skip gitnexus analysis prompt
   --verbose, -v             Print the full bwrap command before execution
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
@@ -95,6 +101,22 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         ;;
       * )
         echo "Skipped git init"
+        ;;
+    esac
+  fi
+fi
+
+if [ ! -d .gitnexus ]; then
+  if [ "$SKIP_GITNEXUS" = true ] || [ ! -t 0 ]; then
+    echo "Skipped gitnexus analyze"
+  else
+    read -r -p "$PWD is not analysed via gitnexus. Analyse repository now? (y/N): " answer
+    case "$answer" in
+      [YyjJ]* )
+        gitnexus analyze --skip-agents-md
+        ;;
+      * )
+        echo "Skipped gitnexus analyze"
         ;;
     esac
   fi
