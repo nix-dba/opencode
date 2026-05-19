@@ -3,7 +3,7 @@
 
 Use the GitNexus MCP tools to understand code, assess impact, and navigate safely. The `$REPONAME` is the directory basename fo the workspace we are running from.
 
-> If any GitNexus tool warns the index is stale, run `gitnexus analyze --skip-agents-md` in terminal first.
+> If any GitNexus tool warns the index is stale, run `gitnexus analyze --index-only` in terminal first.
 
 ## Always Do
 

@@ -120,7 +120,7 @@ if [ ! -d .gitnexus ]; then
     read -r -p "$PWD is not analysed via gitnexus. Analyse repository now? (y/N): " answer
     case "$answer" in
       [YyjJ]* )
-        gitnexus analyze --skip-agents-md
+        gitnexus analyze --index-only
         ;;
       * )
         echo "Skipped gitnexus analyze"

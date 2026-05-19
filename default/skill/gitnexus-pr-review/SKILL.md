@@ -26,7 +26,7 @@ description: "Use when the user wants to review a pull request, understand what 
 6. Summarize findings with risk assessment
 ```
 
-> If "Index is stale" → run `gitnexus analyze --skip-agents-md` in terminal before reviewing.
+> If "Index is stale" → run `gitnexus analyze --index-only` in terminal before reviewing.
 
 ## Checklist
 
