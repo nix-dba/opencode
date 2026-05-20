@@ -12,9 +12,9 @@
     }
   },
   "instructions": [
-    "{file:./prompts/general.md}",
-    "{file:./prompts/gitnexus.md}",
-    "{file:./prompts/karpathy.md}"
+    "~/.config/opencode/prompts/general.md",
+    "~/.config/opencode/prompts/gitnexus.md",
+    "~/.config/opencode/prompts/karpathy.md"
   ]
 }
 

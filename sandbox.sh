@@ -95,6 +95,13 @@ mkdir -p "$HOME/.local/share/opencode"
 mkdir -p "$HOME/.local/state/opencode"
 mkdir -p "$HOME/.cache/opencode"
 
+# Temp files cleanup
+CLEANUP_FILES=()
+cleanup() {
+  rm -f "${CLEANUP_FILES[@]}"
+}
+trap cleanup EXIT
+
 # Git init with conditional prompt
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   if [ "$NO_GIT_INIT" = true ] || [ ! -t 0 ]; then
@@ -178,10 +185,13 @@ if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
   done
 fi
 
-# opencode.jsonc bind mount
+# opencode.jsonc bind mount (expand ~ to $HOME before mounting)
 OPENCODE_JSONC_BINDS=()
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
-  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$OPENCODE_JSONC" "$HOME/.config/opencode/opencode.jsonc")
+  jsonc_tmp=$(mktemp)
+  CLEANUP_FILES+=("$jsonc_tmp")
+  sed "s|\"~/|\"$HOME/|g" "$OPENCODE_JSONC" > "$jsonc_tmp"
+  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_tmp" "$HOME/.config/opencode/opencode.jsonc")
 fi
 
 # Assemble bwrap arguments
