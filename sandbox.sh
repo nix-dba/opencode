@@ -99,6 +99,8 @@ mkdir -p "$HOME/.cache/opencode"
 CLEANUP_FILES=()
 cleanup() {
   rm -f "${CLEANUP_FILES[@]}"
+  find "$HOME/.config/opencode" -mindepth 1 -type f -empty -delete 2>/dev/null
+  find "$HOME/.config/opencode" -mindepth 1 -type d -empty -delete 2>/dev/null
 }
 trap cleanup EXIT
 
