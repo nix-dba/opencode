@@ -87,6 +87,7 @@ EOF
 fi
 
 mkdir -p "$HOME/.config/opencode"
+mkdir -p "$HOME/.config/opencode/command"
 mkdir -p "$HOME/.config/opencode/prompts"
 mkdir -p "$HOME/.config/opencode/skill"
 mkdir -p "$HOME/.gitnexus"
@@ -187,6 +188,16 @@ if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
   done
 fi
 
+# Command bind mounts (individual .md files)
+COMMAND_BINDS=()
+if [ -n "$COMMANDS_DIR" ] && [ -d "$COMMANDS_DIR" ]; then
+  for cmd_file in "$COMMANDS_DIR"/*.md; do
+    [ -f "$cmd_file" ] || continue
+    cmd_name=$(basename "$cmd_file")
+    COMMAND_BINDS+=(--ro-bind-try "$cmd_file" "$HOME/.config/opencode/command/$cmd_name")
+  done
+fi
+
 # opencode.jsonc bind mount (expand ~ to $HOME before mounting)
 OPENCODE_JSONC_BINDS=()
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
@@ -250,6 +261,7 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.gitnexus" "$HOME/.gitnexus"
   "${SKILL_BINDS[@]}"
   "${PROMPT_BINDS[@]}"
+  "${COMMAND_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   --setenv TMPDIR /tmp

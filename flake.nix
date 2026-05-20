@@ -32,6 +32,7 @@
         ];
         text = ''
           export SKILL_DIR="${./default/skill}"
+          export COMMANDS_DIR="${./default/command}"
           export PROMPTS_DIR="${./default/prompts}"
           export OPENCODE_JSONC="${./default/opencode.jsonc}"
         '' + builtins.readFile ./sandbox.sh;
