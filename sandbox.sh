@@ -8,7 +8,7 @@ DO_VERBOSE=false
 NO_GIT_INIT=false
 SKIP_GITNEXUS=false
 EXTRA_WORKSPACES=()
-YOLO_ARGS=(--setenv OPENCODE_YOLO "true")
+YOLO_ARGS=()
 
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
@@ -33,8 +33,8 @@ while [ "$#" -gt 0 ]; do
       DO_VERBOSE=true
       shift
       ;;
-    --no-yolo)
-      YOLO_ARGS=()
+    --yolo)
+      YOLO_ARGS=(--setenv OPENCODE_YOLO "true")
       shift
       ;;
     --no-net)
@@ -77,7 +77,7 @@ Options:
   --no-git-init             Skip git repository initialization prompt
   --skip-gitnexus           Skip gitnexus analysis prompt
   --verbose, -v             Print the full bwrap command before execution
-  --no-yolo                 Do not set OPENCODE_YOLO=true in the sandbox
+  --yolo                    Set OPENCODE_YOLO=true in the sandbox
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
