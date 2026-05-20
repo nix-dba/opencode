@@ -11,6 +11,11 @@
       ]
     }
   },
+  "permission": {
+    "external_directory": {
+      "**/.opencode/**": "allow"
+    }
+  },
   "instructions": [
     "~/.config/opencode/prompts/general.md",
     "~/.config/opencode/prompts/gitnexus.md",
