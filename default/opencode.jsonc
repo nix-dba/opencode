@@ -12,8 +12,9 @@
     }
   },
   "instructions": [
-    "./prompts/general-guideline.md",
-    "./prompts/gitnexus.md"
+    "{file:./prompts/general.md}",
+    "{file:./prompts/gitnexus.md}",
+    "{file:./prompts/karpathy.md}"
   ]
 }
 
