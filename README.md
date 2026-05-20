@@ -76,18 +76,22 @@ or when integrated into `omni-route`:
         "modelMetadata": {
           "gpu/Qwen3.6-35B-A3B-Q4-KV8": {
             "contextWindow": 262144
+          },
+          "gpu/Qwen3.6-27B-Q4-KV8-MTP": {
+            "contextWindow": 170000
           }
+
         }
       }
     }
   },
-  "plugin": ["@cedrugs/opencode-omniauth"]
+  "plugin": ["opencode-omniroute-auth"]
 }
 ```
 
 ### LLaMa.cpp
 
-Example config for my NVIDIA RTX 3090:
+Example config for a NVIDIA RTX 3090:
 
 ```
 [*]
@@ -101,23 +105,6 @@ cache-ram = 16384
 parallel = 1
 ctx-checkpoints = 128
 cache-prompt = 1
-
-[Qwen3.5-27B-Q3-KV8]
-hf-repo = unsloth/Qwen3.5-27B-GGUF
-hf-file = Qwen3.5-27B-UD-Q3_K_XL.gguf
-jinja = 1
-ctx-size = 240000
-temp = 0.7
-min-p = 0.0
-top-p = 0.95
-top-k = 20
-presence-penalty = 1.5
-repeat-penalty = 1.0
-main-gpu = 0
-cache-type-k = q8_0
-cache-type-v = q8_0
-no-mmproj = 1
-split-mode = none # use main gpu only
 
 [Gemma4-31B-Q3-KV8]
 hf-repo = unsloth/gemma-4-31B-it-GGUF
@@ -151,6 +138,27 @@ cache-type-k = q8_0
 cache-type-v = q8_0
 no-mmproj = 1
 split-mode = none # use main gpu only
+
+[Qwen3.6-27B-Q4-KV8-MTP]
+hf-repo = unsloth/Qwen3.6-27B-MTP-GGUF
+hf-file = Qwen3.6-27B-IQ4_NL.gguf
+jinja = 1
+ctx-size = 170000
+temp = 0.6
+min-p = 0.0
+top-p = 0.95
+top-k = 20
+presence-penalty = 0.0
+repeat-penalty = 1.0
+main-gpu = 0
+cache-type-k = q8_0
+cache-type-v = q8_0
+no-mmproj = 1
+split-mode = none # use main gpu only
+spec-type = draft-mtp
+spec-draft-n-max = 3
+draft-p-min = 0.0
+reasoning-format = deepseek
 ```
 
 llama-cpp server is started with folowing arg in my k8s server:
