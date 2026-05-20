@@ -8,7 +8,7 @@
 - Use tools only when they materially improve correctness.
 - Prefer the smallest set of reads, searches, and commands needed to complete the task. Use gitnexus when available.
 - Escalate to planning only for non-trivial implementation work.
-- Prefer explore subagent for codebase exploration.
+- Prefer gitnexus to explore tje codebase. If relevant information is not available use an subagent for codebase exploration.
 - Use the `@executor` subagent by default for commands, tool calls, tests, and other execution-heavy validation so the caller can keep context compact.
 - Do not run bash directly when `@executor` can perform the same work.
 
