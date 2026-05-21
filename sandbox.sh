@@ -87,7 +87,7 @@ Options:
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
-If no COMMAND is given, defaults to 'opencode'.
+If no COMMAND is given, defaults to 'zellij' with a layout running opencode.
 EOF
   exit 0
 fi
@@ -105,11 +105,26 @@ mkdir -p "$HOME/.cache/opencode"
 # Temp files cleanup
 CLEANUP_FILES=()
 cleanup() {
-  rm -f "${CLEANUP_FILES[@]}"
+  rm -rf "${CLEANUP_FILES[@]}"
   find "$HOME/.config/opencode" -mindepth 1 -type f -empty -delete 2>/dev/null
   find "$HOME/.config/opencode" -mindepth 1 -type d -empty -delete 2>/dev/null
 }
 trap cleanup EXIT
+
+# Zellij isolated config (tempdir, never touches host)
+ZELLIJ_TMPDIR=$(mktemp -d)
+CLEANUP_FILES+=("$ZELLIJ_TMPDIR")
+ZELLIJ_VER=$(zellij --version | cut -d ' ' -f 2)
+mkdir -p "$ZELLIJ_TMPDIR/config/zellij"
+mkdir -p "$ZELLIJ_TMPDIR/cache/zellij/$ZELLIJ_VER"
+touch "$ZELLIJ_TMPDIR/cache/zellij/$ZELLIJ_VER/seen_release_notes"
+cat > "$ZELLIJ_TMPDIR/config/zellij/config.kdl" << 'EOF'
+show_startup_tips false
+show_release_notes false
+default_shell "bash"
+copy_command "wl-copy"
+default_mode "locked"
+EOF
 
 # Git init with conditional prompt
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -218,6 +233,13 @@ if [ "$MOUNT_SSH" = true ] && [ -d "$HOME/.ssh" ]; then
   SSH_BINDS=(--ro-bind-try "$HOME/.ssh" "$HOME/.ssh")
 fi
 
+# Default command: zellij with layout, or user override
+if [ $# -eq 0 ]; then
+  CMD=(zellij --layout "$LAYOUT_KDL")
+else
+  CMD=("$@")
+fi
+
 # Assemble bwrap arguments
 BWRAP_ARGS=(
   --unshare-all
@@ -275,6 +297,8 @@ BWRAP_ARGS=(
   "${COMMAND_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
+  --bind "$ZELLIJ_TMPDIR/config/zellij" "$HOME/.config/zellij"
+  --bind "$ZELLIJ_TMPDIR/cache/zellij" "$HOME/.cache/zellij"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0
@@ -285,7 +309,7 @@ BWRAP_ARGS=(
   --setenv GIT_SSL_CAINFO /etc/ssl/certs/ca-certificates.crt
   "${YOLO_ARGS[@]}"
   "${EXPERIMENTAL_ARGS[@]}"
-  "${@:-opencode}"
+  "${CMD[@]}"
 )
 
 # Verbose: print the command before executing

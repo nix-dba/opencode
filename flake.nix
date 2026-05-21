@@ -1,5 +1,5 @@
 {
-  description = "OpenCode";
+  description = "My Sandboxed OpenCode";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -27,7 +27,9 @@
           llm-agents.packages.${system}.opencode
           llm-agents.packages.${system}.gitnexus
           llm-agents.packages.${system}.tuicr
+          pkgs.zellij
           pkgs.git
+          pkgs.bash
           pkgs.wl-clipboard
         ];
         text = ''
@@ -35,6 +37,7 @@
           export COMMANDS_DIR="${./default/command}"
           export PROMPTS_DIR="${./default/prompts}"
           export OPENCODE_JSONC="${./default/opencode.jsonc}"
+          export LAYOUT_KDL="${./default/layout.kdl}"
         '' + builtins.readFile ./sandbox.sh;
       };
     in
