@@ -61,7 +61,7 @@ Example config for `~/.config/opencode/opencode.json` when using the llama-cpp e
 }
 ```
 
-or when integrated into `omni-route`:
+when integrated into `omni-route`:
 
 ```
 {
