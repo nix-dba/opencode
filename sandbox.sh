@@ -9,6 +9,7 @@ NO_GIT_INIT=false
 SKIP_GITNEXUS=false
 EXTRA_WORKSPACES=()
 YOLO_ARGS=()
+MOUNT_SSH=false
 
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
@@ -35,6 +36,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --yolo)
       YOLO_ARGS=(--setenv OPENCODE_YOLO "true")
+      shift
+      ;;
+    --ssh-keys)
+      MOUNT_SSH=true
       shift
       ;;
     --no-net)
@@ -78,6 +83,7 @@ Options:
   --skip-gitnexus           Skip gitnexus analysis prompt
   --verbose, -v             Print the full bwrap command before execution
   --yolo                    Set OPENCODE_YOLO=true in the sandbox
+  --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
@@ -207,6 +213,11 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
   OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_tmp" "$HOME/.config/opencode/opencode.jsonc")
 fi
 
+SSH_BINDS=()
+if [ "$MOUNT_SSH" = true ] && [ -d "$HOME/.ssh" ]; then
+  SSH_BINDS=(--ro-bind-try "$HOME/.ssh" "$HOME/.ssh")
+fi
+
 # Assemble bwrap arguments
 BWRAP_ARGS=(
   --unshare-all
@@ -258,6 +269,7 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
   --bind-try "$HOME/.gitnexus" "$HOME/.gitnexus"
+  "${SSH_BINDS[@]}"
   "${SKILL_BINDS[@]}"
   "${PROMPT_BINDS[@]}"
   "${COMMAND_BINDS[@]}"
