@@ -33,6 +33,7 @@ When the user runs this command, execute the following workflow:
 
 When generating commit messages, follow these rules:
 
+- **English only**: Write all commit messages in English
 - **Atomic commits**: Each commit should contain related changes that serve a single purpose
 - **Imperative mood**: Write as commands (e.g., "add feature" not "added feature")
 - **Concise first line**: Keep under 72 characters
