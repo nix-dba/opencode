@@ -13,7 +13,8 @@
   },
   "permission": {
     "external_directory": {
-      "**/.opencode/**": "allow"
+      "**/.opencode/**": "allow",
+      "**/.gitnexus/**": "allow"
     }
   },
   "instructions": [
