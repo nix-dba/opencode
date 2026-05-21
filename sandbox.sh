@@ -243,7 +243,6 @@ BWRAP_ARGS=(
   --ro-bind-try /etc/subgid /etc/subgid
   # home dirs
   --dir "$HOME"
-  --dir "$HOME/.gitnexus"
   --dir "${XDG_RUNTIME_DIR:-/run/user/$UID}"
   --setenv HOME "$HOME"
   --chdir "$PWD"
