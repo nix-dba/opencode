@@ -18,20 +18,21 @@
         inherit system;
       };
 
+      shellInputs = with pkgs; [
+        bash
+        bubblewrap
+        bun
+        llm-agents.packages.${system}.opencode
+        llm-agents.packages.${system}.gitnexus
+        llm-agents.packages.${system}.tuicr
+        zellij
+        git
+        wl-clipboard
+      ];
+
       sandbox = pkgs.writeShellApplication {
         name = "sandbox";
-        runtimeInputs = [
-          pkgs.bash
-          pkgs.bubblewrap
-          pkgs.bun
-          llm-agents.packages.${system}.opencode
-          llm-agents.packages.${system}.gitnexus
-          llm-agents.packages.${system}.tuicr
-          pkgs.zellij
-          pkgs.git
-          pkgs.bash
-          pkgs.wl-clipboard
-        ];
+        runtimeInputs = shellInputs;
         text = ''
           export SKILL_DIR="${./default/skill}"
           export COMMANDS_DIR="${./default/command}"
@@ -42,6 +43,9 @@
       };
     in
     {
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = shellInputs;
+      };
       apps.${system}.default = {
         type = "app";
         program = "${sandbox}/bin/sandbox";
