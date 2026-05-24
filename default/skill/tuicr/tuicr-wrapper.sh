@@ -70,7 +70,7 @@ check_git_repo() {
 }
 
 check_tuicr_running() {
-  if zellij action list-panes 2>/dev/null | grep -q 'tuicr'; then
+  if zellij action list-panes 2>/dev/null | grep -q 'tuicr -w'; then
     return 0
   fi
   return 1
