@@ -10,6 +10,12 @@ In your repository root run:
 nix run github:nix-dba/opencode --refresh
 ```
 
+or via backup respository:
+
+```sh
+nix run git+https://codeberg.org/nix-dba/opencode --refresh
+```
+
 ## Features
 
 This respository provides my development opencode setup. We package all version pinned so we can roll back in case of broken opencode release by specify the git hash in the `nix run` command. The nix flake bundels the following additional features:
