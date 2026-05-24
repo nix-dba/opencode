@@ -56,24 +56,12 @@ check_tuicr() {
   return 0
 }
 
-check_tuicr_stdout_support() {
-  tuicr --help 2>&1 | grep -q -- '--stdout'
-}
-
 check_git_repo() {
   local dir="$1"
   if ! git -C "$dir" rev-parse --git-dir &> /dev/null; then
-    log_error "Not a git repository: $dir"
     return 1
   fi
   return 0
-}
-
-check_tuicr_running() {
-  if zellij action list-panes 2>/dev/null | grep -q 'tuicr -w'; then
-    return 0
-  fi
-  return 1
 }
 
 launch_tuicr_pane() {
@@ -82,15 +70,8 @@ launch_tuicr_pane() {
 
   # Check if --stdout is supported and set up output capture
   local tuicr_cmd
-  if check_tuicr_stdout_support; then
-    tuicr_cmd="tuicr -w --stdout > '$output_file'"
-    log_info "Using --stdout mode (output will be captured)"
-  else
-    tuicr_cmd="tuicr -w"
-    log_warn "tuicr --stdout not supported, output will be copied to clipboard"
-  fi
+  tuicr_cmd="tuicr -w --stdout > '$output_file'"
 
-  log_info "Launching tuicr in floating popup (${TUICR_POPUP_SIZE}% of screen)"
   log_info "Directory: $target_dir"
 
   # Launch tuicr in a floating pane and block until it exits
@@ -103,68 +84,41 @@ launch_tuicr_pane() {
     --width "${TUICR_POPUP_SIZE}%" \
     -- bash -c "$tuicr_cmd"
 
-  log_info "tuicr finished"
-
-  # Output captured instructions if --stdout was used
-  if [[ -f "$output_file" ]]; then
-    if [[ -s "$output_file" ]]; then
-      echo ""
-      echo "=== TUICR INSTRUCTIONS ==="
-      cat "$output_file"
-      echo "=== END TUICR INSTRUCTIONS ==="
-    else
-      log_info "No instructions exported from tuicr"
-      log_info "If you exported to clipboard, paste the instructions here"
-    fi
-    rm -f "$output_file"
+  # Press y to exit tuicr and export the comments
+  if [[ -s "$output_file" ]]; then
+    echo ""
+    echo "=== TUICR INSTRUCTIONS ==="
+    cat "$output_file"
+    echo "=== END TUICR INSTRUCTIONS ==="
   else
-    log_info "If you exported instructions, they are in your clipboard - paste them here"
+    log_info "No instructions exported from tuicr"
   fi
+  rm -f "$output_file"
 }
 
 main() {
-  # Handle help
   if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     usage
     exit 0
   fi
 
-  # Check for tuicr
   if ! check_tuicr; then
     exit 1
   fi
 
-  # Determine target directory
   local target_dir="${1:-.}"
   target_dir=$(cd "$target_dir" && pwd)  # Get absolute path
 
-  # Verify it's a git repo
   if ! check_git_repo "$target_dir"; then
+    log_error "$target_dir is not a git repository!"
     exit 1
   fi
 
-  # Check if we're in Zellij
   if ! check_zellij; then
     log_error "Not running inside Zellij!"
-    echo ""
-    echo "To use tuicr with your coding agent, run that agent inside the sandbox (which starts Zellij)."
-    echo ""
-    echo "1. Exit the current agent session."
-    echo ""
-    echo "2. Restart the agent inside the sandbox."
-    echo ""
-    echo "3. Then run /tuicr again."
     exit 1
   fi
 
-  # Check if tuicr is already running
-  if check_tuicr_running; then
-    log_warn "tuicr is already running in another pane"
-    log_info "Switch to it with Alt + arrows"
-    exit 0
-  fi
-
-  # Launch tuicr in a floating pane
   launch_tuicr_pane "$target_dir"
 }
 

@@ -24,8 +24,6 @@ Since coding agents cannot run interactive TUI applications directly, this skill
 3. If no: Provides instructions to restart the agent inside the sandbox
 4. After tuicr exits: Captures any instructions exported via `--stdout`
 
-> **Tip:** In the sandbox environment, you can also press **`Alt r`** to open tuicr directly (configured as a keybinding in `sandbox.sh`).
-
 ## Determining the Directory
 
 **Important:** You must determine the correct git repository directory based on context.
@@ -104,15 +102,6 @@ User says: "let me review the changes in myproject"
 User says: "/tuicr ~/projects/myapp"
 -> Run tuicr-wrapper.sh with `~/projects/myapp`
 
-## Zellij Tips (relay to user if needed)
-
-- Switch focus between panes: `Alt + arrows`
-- Resize the floating pane: `Ctrl+n` to enter resize mode, then `h/j/k/l`
-- Toggle floating pane visibility: `Alt+f`
-- Close the floating tuicr pane: Press `q` to exit tuicr (pane auto-closes)
-- Lock/unlock Zellij: `Ctrl+g`
-- The `Alt r` keybinding is pre-configured in the sandbox for quick access
-
 ## Error Handling
 
 | Error | Action |
@@ -120,7 +109,6 @@ User says: "/tuicr ~/projects/myapp"
 | Not in Zellij | Tell the user to restart the agent inside the sandbox |
 | Not a git repo | Ask user for correct directory |
 | tuicr not installed | Tell user to install tuicr |
-| tuicr already running | Tell user to switch to the existing tuicr pane via `Alt + arrows` |
 
 ## When NOT to use
 

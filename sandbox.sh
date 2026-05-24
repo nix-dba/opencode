@@ -127,13 +127,7 @@ default_mode "locked"
 
 keybinds {
     shared_except "locked" {
-        bind "Alt r" {
-            Run "tuicr" "-w" {
-                floating true
-                height "90%"
-                width "90%"
-            }
-        }
+
     }
 }
 EOF
