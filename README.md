@@ -10,6 +10,15 @@ In your repository root run:
 nix run github:nix-dba/opencode --refresh
 ```
 
+## Features
+
+This respository provides my development opencode setup. We package all version pinned so we can roll back in case of broken opencode release by specify the git hash in the `nix run` command. The nix flake bundels the following additional features:
+
+- [tuicr](https://github.com/agavra/tuicr): A code review TUI with vim keybindings directly integrated into opencode via command `/tuicr`. In `tuicr` use the key `y` to automatically load the annotation to opencode.
+- `zellij` to manage the terminal workspace with floting popups for integrated tui applications.
+- Sandboxed bubblewrap environment. Reduce the rist of exposing secrets and protect your private data from LLM access.
+- [GitNexus](https://github.com/abhigyanpatwari/GitNexus): A client-side knowledge graph creator that runs entirely local. Via integrated `gitnexus` skills the agent has access to every dependency, call chain, cluster, and execution flow so AI agents never miss code.
+
 ## Config
 
 Example config for `~/.config/opencode/opencode.json` when using the llama-cpp endpoint direct.
