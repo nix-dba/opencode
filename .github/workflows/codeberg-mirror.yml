@@ -1,0 +1,26 @@
+name: Mirror Repository to Codeberg
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    name: 'Mirror Repository to Codeberg'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Mirror to Codeberg'
+        uses: cssnr/mirror-repository-action@v1
+        with:
+          host: https://codeberg.org
+          create: false
+          username: ${{ github.actor }}
+          password: ${{ secrets.CODEBERG_TOKEN }}
