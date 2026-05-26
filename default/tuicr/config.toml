@@ -1,5 +1,4 @@
 diff_view = "side-by-side"
-ignore_whitespace = false
 appearance = "dark"
 mouse = true
 leader = ","
