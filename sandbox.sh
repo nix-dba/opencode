@@ -94,6 +94,7 @@ fi
 
 mkdir -p "$HOME/.config/opencode"
 mkdir -p "$HOME/.config/opencode/command"
+mkdir -p "$HOME/.config/tuicr"
 mkdir -p "$HOME/.config/opencode/prompts"
 mkdir -p "$HOME/.config/opencode/skill"
 mkdir -p "$HOME/.gitnexus"
@@ -103,6 +104,9 @@ mkdir -p "$HOME/.local/state/opencode"
 mkdir -p "$HOME/.cache/opencode"
 
 # Temp files cleanup
+# Script location for referencing bundled configs
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 CLEANUP_FILES=()
 cleanup() {
   rm -rf "${CLEANUP_FILES[@]}"
@@ -291,6 +295,8 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.local/state/opencode" "$HOME/.local/state/opencode"
   --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode"
   --bind-try "$HOME/.opencode" "$HOME/.opencode"
+  --ro-bind-try "$HOME/.config/tuicr" "$HOME/.config/tuicr"
+  --ro-bind-try "$SCRIPT_DIR/default/tuicr/config.toml" "$HOME/.config/tuicr/config.toml"
   --ro-bind-try "$HOME/.config/nix" "$HOME/.config/nix"
   --ro-bind-try "$HOME/.config/git" "$HOME/.config/git"
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"

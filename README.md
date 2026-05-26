@@ -7,13 +7,13 @@ Run opencode in sandboxed bubblewrap via nix.
 In your repository root run:
 
 ```sh
-nix run github:nix-dba/opencode --refresh
+nix run github:nix-dba/opencode --refresh --accept-flake-config
 ```
 
 or via backup respository:
 
 ```sh
-nix run git+https://codeberg.org/nix-dba/opencode --refresh
+nix run git+https://codeberg.org/nix-dba/opencode --refresh --accept-flake-config
 ```
 
 ## Features
