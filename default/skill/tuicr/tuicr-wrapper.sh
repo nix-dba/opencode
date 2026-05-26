@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-set -e -u -o pipefail
 
 # Configuration - override via environment variables
 TUICR_POPUP_SIZE="${TUICR_POPUP_SIZE:-90}"              # percentage of terminal
 
 log_info() {
-  echo "[tuicr] $*"
+  echo "$*"
 }
 
 log_warn() {
-  echo "[tuicr] $*"
+  echo "$*"
 }
 
 log_error() {
-  echo "[tuicr] $*"
+  echo "$*"
 }
 
 usage() {
@@ -66,7 +65,7 @@ launch_tuicr_pane() {
   local tuicr_cmd
   tuicr_cmd="tuicr -w --stdout > '$output_file'"
 
-  log_info "Directory: $target_dir"
+  # log_info "Directory: $target_dir"
 
   # Launch tuicr in a floating pane and block until it exits
   zellij run \
@@ -80,12 +79,9 @@ launch_tuicr_pane() {
 
   # Press y to exit tuicr and export the comments
   if [[ -s "$output_file" ]]; then
-    echo ""
-    echo "=== TUICR INSTRUCTIONS ==="
     cat "$output_file"
-    echo "=== END TUICR INSTRUCTIONS ==="
   else
-    log_info "No instructions exported from tuicr"
+    log_info "Nothing to do. Everything's fine"
   fi
   rm -f "$output_file"
 }
