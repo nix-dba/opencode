@@ -2,6 +2,8 @@
 
 Run opencode in sandboxed bubblewrap via nix.
 
+
+
 ## Usage
 
 In your repository root run:
