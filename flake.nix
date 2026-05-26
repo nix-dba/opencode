@@ -44,6 +44,7 @@
           export PROMPTS_DIR="${./default/prompts}"
           export OPENCODE_JSONC="${./default/opencode.jsonc}"
           export LAYOUT_KDL="${./default/layout.kdl}"
+          export TUICR_CONFIG="${./default/tuicr/config.toml}"
         '' + builtins.readFile ./sandbox.sh;
       };
     in

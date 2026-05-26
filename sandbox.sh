@@ -296,7 +296,7 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode"
   --bind-try "$HOME/.opencode" "$HOME/.opencode"
   --ro-bind-try "$HOME/.config/tuicr" "$HOME/.config/tuicr"
-  --ro-bind-try "$SCRIPT_DIR/default/tuicr/config.toml" "$HOME/.config/tuicr/config.toml"
+  --ro-bind-try "${TUICR_CONFIG:-$SCRIPT_DIR/default/tuicr/config.toml}" "$HOME/.config/tuicr/config.toml"
   --ro-bind-try "$HOME/.config/nix" "$HOME/.config/nix"
   --ro-bind-try "$HOME/.config/git" "$HOME/.config/git"
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"
