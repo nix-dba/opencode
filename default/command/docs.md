@@ -27,6 +27,7 @@ If a file already exists, update it — don't overwrite without reviewing the ex
 Add a `## Documentation` section near the top linking to the generated docs. If any existing README content is stale or contradicts the generated docs, update it to match. Generate a simple README.md with the following content:
 
 - include a brief overview section explaining what the software does
+- add a overview section with all important features the software provides
 - add build instructions: check if `flake.nix` or `justfile` exists and reference those specific build commands, not generic ones
 - optional update the setup instruction if the user has provided this information
 

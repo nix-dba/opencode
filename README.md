@@ -1,6 +1,15 @@
 # OpenCode
 
-Run opencode in sandboxed bubblewrap via nix.
+Run opencode in sandboxed bubblewrap via Nix.
+
+## Documentation
+
+- [Overview](docs/overview.md) -- High-level architecture and components
+- [Sandbox](docs/sandbox.md) -- Bubblewrap sandbox CLI flags and bind mounts
+- [Commands](docs/commands.md) -- Custom `/commit`, `/docs`, `/tuicr` commands
+- [Skills](docs/skills.md) -- GitNexus and tuicr skills available to the agent
+- [Prompts](docs/prompts.md) -- Agent instruction files (general, gitnexus, karpathy)
+- [Configuration](docs/configuration.md) -- opencode.jsonc, Zellij layout, tuicr config, Nix flake
 
 ## Usage
 
@@ -10,19 +19,33 @@ In your repository root run:
 nix run github:nix-dba/opencode --refresh --accept-flake-config
 ```
 
-or via backup respository:
+or via backup repository:
 
 ```sh
 nix run git+https://codeberg.org/nix-dba/opencode --refresh --accept-flake-config
 ```
 
+## Build & Development
+
+This repository uses a Nix flake. To enter a development shell with all dependencies:
+
+```sh
+nix develop
+```
+
+To format Nix files:
+
+```sh
+nix fmt
+```
+
 ## Features
 
-This respository provides my development opencode setup. We package all version pinned so we can roll back in case of broken opencode release by specify the git hash in the `nix run` command. The nix flake bundels the following additional features:
+All tools are version-pinned via the Nix flake lockfile for reproducible environments. The flake bundles the following additional features:
 
 - [tuicr](https://github.com/agavra/tuicr): A code review TUI with vim keybindings directly integrated into opencode via command `/tuicr`. In `tuicr` use the key `y` to automatically load the annotation to opencode.
-- `zellij` to manage the terminal workspace with floting popups for integrated tui applications.
-- Sandboxed bubblewrap environment. Reduce the rist of exposing secrets and protect your private data from LLM access.
+- `zellij` to manage the terminal workspace with floating popups for integrated tui applications.
+- Sandboxed bubblewrap environment. Reduce the risk of exposing secrets and protect your private data from LLM access.
 - [GitNexus](https://github.com/abhigyanpatwari/GitNexus): A client-side knowledge graph creator that runs entirely local. Via integrated `gitnexus` skills the agent has access to every dependency, call chain, cluster, and execution flow so AI agents never miss code.
 
 ## Config
