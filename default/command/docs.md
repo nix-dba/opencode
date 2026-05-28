@@ -28,7 +28,7 @@ Add a `## Documentation` section near the top linking to the generated docs. If 
 
 - include a brief overview section explaining what the software does
 - add a overview section with all important features the software provides
-- add build instructions: check if `flake.nix` or `justfile` exists and reference those specific build commands, not generic ones
+- add build instructions: check if `flake.nix` or `justfile` exists and reference those specific build commands, not generic ones. Only add build instructions if the repository acutally need to be build/compiled else dont write these information to the readme
 - optional update the setup instruction if the user has provided this information
 
 
