@@ -28,6 +28,7 @@ Add a `## Documentation` section near the top linking to the generated docs. If 
 
 - include a brief overview section explaining what the software does
 - add build instructions: check if `flake.nix` or `justfile` exists and reference those specific build commands, not generic ones
+- optional update the setup instruction if the user has provided this information
 
 
 ### Grounding Rules
