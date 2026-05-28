@@ -33,6 +33,7 @@
         zellij
         git
         wl-clipboard
+        python3
       ];
 
       sandbox = pkgs.writeShellApplication {
