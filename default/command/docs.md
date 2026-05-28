@@ -38,6 +38,7 @@ Add a `## Documentation` section near the top linking to the generated docs. If 
 - No speculation, no invented features, no placeholder sections
 - If something is unclear, state "not documented" or ask the user for more details rather than guessing
 - Cite exact file paths where relevant
+- Keep example configuration if available
 
 ### Style
 
