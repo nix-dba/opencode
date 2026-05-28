@@ -1,7 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": true,
-  "plugin": ["opencode-omniroute-auth@v1.1.4"],
+  "plugin": ["opencode-omniroute-auth@v1.1.4", [
+      "@nix-dba/opencode-plugin-simple-memory@v1.0.4",
+      {
+        "autoLoad": true,
+        "autoSave": true,
+        "autoHookTimeoutMs": 100,
+        "contextLimit": 5,
+        "contextMaxChars": 1200,
+        "contextMinScore": 1,
+        "autoSaveScope": "user"
+      }
+    ]],
   "mcp": {
     "gitnexus": {
       "type": "local",
