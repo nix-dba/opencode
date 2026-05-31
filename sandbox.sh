@@ -8,7 +8,6 @@ DO_VERBOSE=false
 NO_GIT_INIT=false
 SKIP_GITNEXUS=false
 EXTRA_WORKSPACES=()
-YOLO_ARGS=()
 MOUNT_SSH=false
 
 # Parse CLI flags before any side effects
@@ -32,10 +31,6 @@ while [ "$#" -gt 0 ]; do
       ;;
     --verbose|-v)
       DO_VERBOSE=true
-      shift
-      ;;
-    --yolo)
-      YOLO_ARGS=(--setenv OPENCODE_YOLO "true")
       shift
       ;;
     --ssh-keys)
@@ -82,7 +77,6 @@ Options:
   --no-git-init             Skip git repository initialization prompt
   --skip-gitnexus           Skip gitnexus analysis prompt
   --verbose, -v             Print the full bwrap command before execution
-  --yolo                    Set OPENCODE_YOLO=true in the sandbox
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
@@ -319,7 +313,6 @@ BWRAP_ARGS=(
   --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
   --setenv NIX_SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
   --setenv GIT_SSL_CAINFO /etc/ssl/certs/ca-certificates.crt
-  "${YOLO_ARGS[@]}"
   "${EXPERIMENTAL_ARGS[@]}"
   "${CMD[@]}"
 )

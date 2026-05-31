@@ -16,7 +16,7 @@ nix run . --refresh
 
 ## CLI Flags
 
-Defined in `sandbox.sh:74-91`:
+Defined in `sandbox.sh:69-86`:
 
 | Flag | Description |
 |------|-------------|
@@ -24,7 +24,6 @@ Defined in `sandbox.sh:74-91`:
 | `--no-git-init` | Skip git repository initialization prompt |
 | `--skip-gitnexus` | Skip GitNexus analysis prompt |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
-| `--yolo` | Set `OPENCODE_YOLO=true` in the sandbox |
 | `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
 | `--no-net` | Disable network access in the sandbox |
 | `-w`, `--workspace PATH` | Bind additional workspace directory (repeatable) |
