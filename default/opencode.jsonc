@@ -37,7 +37,8 @@
     },
     "external_directory": {
       "**/.opencode/**": "allow",
-      "**/.gitnexus/**": "allow"
+      "**/.gitnexus/**": "allow",
+      "*": "allow"
     }
   },
   "instructions": [
