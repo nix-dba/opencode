@@ -46,6 +46,8 @@
           export OPENCODE_JSONC="${./default/opencode.jsonc}"
           export LAYOUT_KDL="${./default/layout.kdl}"
           export TUICR_CONFIG="${./default/tuicr/config.toml}"
+          export MERGE_SCRIPT="${./merge-jsonc.js}"
+          export GITNEXUS_DIR="${./gitnexus}"
         '' + builtins.readFile ./sandbox.sh;
       };
     in

@@ -6,7 +6,7 @@ EXPERIMENTAL_ARGS=()
 NET_ARGS=(--share-net)
 DO_VERBOSE=false
 NO_GIT_INIT=false
-SKIP_GITNEXUS=false
+WITH_FEATURES=()
 EXTRA_WORKSPACES=()
 MOUNT_SSH=false
 
@@ -25,8 +25,8 @@ while [ "$#" -gt 0 ]; do
       NO_GIT_INIT=true
       shift
       ;;
-    --skip-gitnexus)
-      SKIP_GITNEXUS=true
+    --with-gitnexus)
+      WITH_FEATURES+=("gitnexus")
       shift
       ;;
     --verbose|-v)
@@ -75,7 +75,7 @@ Options:
   -h, --help                Show this help message
   --experimental-plan-mode  Enable experimental plan mode
   --no-git-init             Skip git repository initialization prompt
-  --skip-gitnexus           Skip gitnexus analysis prompt
+  --with-gitnexus           Include GitNexus code analysis tools (skills, MCP, prompts)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --no-net                  Disable network access in the sandbox
@@ -91,7 +91,6 @@ mkdir -p "$HOME/.config/opencode/command"
 mkdir -p "$HOME/.config/tuicr"
 mkdir -p "$HOME/.config/opencode/prompts"
 mkdir -p "$HOME/.config/opencode/skill"
-mkdir -p "$HOME/.gitnexus"
 mkdir -p "$HOME/.opencode"
 mkdir -p "$HOME/.local/share/opencode"
 mkdir -p "$HOME/.local/state/opencode"
@@ -149,21 +148,49 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   fi
 fi
 
-if [ ! -d .gitnexus ]; then
-  if [ "$SKIP_GITNEXUS" = true ] || [ ! -t 0 ]; then
-    echo "Skipped gitnexus analyze"
-  else
-    read -r -p "$PWD is not analysed via gitnexus. Analyse repository now? (y/N): " answer
-    case "$answer" in
-      [YyjJ]* )
-        gitnexus analyze --index-only
-        ;;
-      * )
-        echo "Skipped gitnexus analyze"
-        ;;
-    esac
+# Feature setup (per --with-<name> flags)
+FEATURE_BINDS=()
+GITNEXUS_BIND=()
+for feature in "${WITH_FEATURES[@]}"; do
+  feature_dir_var="${feature}_DIR"
+  feature_dir="${!feature_dir_var}"
+  [ -d "$feature_dir" ] || continue
+
+  # Skills
+  if [ -d "$feature_dir/skill" ]; then
+    for skill_path in "$feature_dir/skill"/*; do
+      [ -d "$skill_path" ] || continue
+      FEATURE_BINDS+=(--ro-bind-try "$skill_path" "$HOME/.config/opencode/skill/$(basename "$skill_path")")
+    done
   fi
-fi
+
+  # Prompts
+  if [ -d "$feature_dir/prompts" ]; then
+    for prompt_file in "$feature_dir/prompts"/*.md; do
+      [ -f "$prompt_file" ] || continue
+      FEATURE_BINDS+=(--ro-bind-try "$prompt_file" "$HOME/.config/opencode/prompts/$(basename "$prompt_file")")
+    done
+  fi
+
+  # Feature-specific setup
+  case "$feature" in
+    gitnexus)
+      mkdir -p "$HOME/.gitnexus"
+      GITNEXUS_BIND=(--bind-try "$HOME/.gitnexus" "$HOME/.gitnexus")
+      if [ ! -d .gitnexus ] && [ -t 0 ]; then
+        read -r -p "$PWD is not analysed via gitnexus. Analyse now? (y/N): " answer
+        case "$answer" in
+          [YyjJ]* )
+            gitnexus analyze --index-only
+            ;;
+          * )
+            echo "Skipped gitnexus analyze"
+            ;;
+        esac
+      fi
+      ;;
+  esac
+done
 
 # Workspace binds
 WORKSPACES=("$PWD" "${EXTRA_WORKSPACES[@]}")
@@ -223,13 +250,29 @@ if [ -n "$COMMANDS_DIR" ] && [ -d "$COMMANDS_DIR" ]; then
   done
 fi
 
-# opencode.jsonc bind mount (expand ~ to $HOME before mounting)
+# opencode.jsonc bind mount (merge overlays for each enabled feature)
 OPENCODE_JSONC_BINDS=()
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
-  jsonc_tmp=$(mktemp)
-  CLEANUP_FILES+=("$jsonc_tmp")
-  sed "s|\"~/|\"$HOME/|g" "$OPENCODE_JSONC" > "$jsonc_tmp"
-  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_tmp" "$HOME/.config/opencode/opencode.jsonc")
+  jsonc_current=$(mktemp)
+  CLEANUP_FILES+=("$jsonc_current")
+  sed "s|\"~/|\"$HOME/|g" "$OPENCODE_JSONC" > "$jsonc_current"
+
+  for feature in "${WITH_FEATURES[@]}"; do
+    feature_dir_var="${feature}_DIR"
+    feature_dir="${!feature_dir_var}"
+    [ -d "$feature_dir" ] || continue
+    overlay="$feature_dir/opencode.jsonc"
+    [ -f "$overlay" ] || continue
+
+    overlay_tmp=$(mktemp)
+    merged_tmp=$(mktemp)
+    CLEANUP_FILES+=("$overlay_tmp" "$merged_tmp")
+    sed "s|\"~/|\"$HOME/|g" "$overlay" > "$overlay_tmp"
+    bun "$MERGE_SCRIPT" "$jsonc_current" "$overlay_tmp" "$merged_tmp"
+    jsonc_current="$merged_tmp"
+  done
+
+  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_current" "$HOME/.config/opencode/opencode.jsonc")
 fi
 
 SSH_BINDS=()
@@ -296,11 +339,12 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
-  --bind-try "$HOME/.gitnexus" "$HOME/.gitnexus"
+  "${GITNEXUS_BIND[@]}"
   "${SSH_BINDS[@]}"
   "${SKILL_BINDS[@]}"
   "${PROMPT_BINDS[@]}"
   "${COMMAND_BINDS[@]}"
+  "${FEATURE_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   --bind "$ZELLIJ_TMPDIR/config/zellij" "$HOME/.config/zellij"

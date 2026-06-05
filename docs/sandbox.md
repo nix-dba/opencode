@@ -22,7 +22,7 @@ Defined in `sandbox.sh:69-86`:
 |------|-------------|
 | `--experimental-plan-mode` | Enable experimental planning mode |
 | `--no-git-init` | Skip git repository initialization prompt |
-| `--skip-gitnexus` | Skip GitNexus analysis prompt |
+| `--with-gitnexus` | Include GitNexus code analysis tools (skills, MCP, prompts) |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
 | `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
 | `--no-net` | Disable network access in the sandbox |
@@ -30,16 +30,16 @@ Defined in `sandbox.sh:69-86`:
 
 ## Behavior
 
-- Creates necessary directories (`~/.config/opencode`, `~/.gitnexus`, etc.) before sandbox entry
+- Creates necessary directories (`~/.config/opencode`, `~/.opencode`, etc.) before sandbox entry
 - If the current directory is not a git repo, prompts to initialize one
-- If the repo lacks `.gitnexus`, prompts to run `gitnexus analyze --index-only`
+- If `--with-gitnexus` is passed and the repo lacks `.gitnexus`, prompts to run `gitnexus analyze --index-only`
 - Uses an isolated Zellij config (temp directory) to avoid polluting host Zellij state (`sandbox.sh:118-137`)
 - Default command is `zellij --layout <layout.kdl>` which runs opencode inside Zellij
 - If arguments are provided, they are passed directly as the sandbox command instead
 - Network binds (`docker.sock`, `resolv.conf`, `hosts`, `nsswitch.conf`) are conditional on `--no-net`
 - Wayland socket is auto-detected and mounted for GUI clipboard support
 - SSH keys are mounted only when `--ssh-keys` is passed
-- Individual skill, prompt, and command directories are mounted as read-only bind mounts from the flake default directory
+- Individual skill, prompt, and command directories are mounted as read-only bind mounts from the flake default directory, plus per-feature overlays for enabled `--with-*` flags
 
 ## Sandbox Bind Mounts
 
@@ -49,5 +49,5 @@ The sandbox (`sandbox.sh:254-325`) mounts:
 - TLS/SSL: `/etc/ssl`, `/etc/pki`, `/etc/ca-certificates`, `/etc/nix`, `/etc/static`
 - User config: `~/.config/opencode` (read-write), `~/.config/tuicr` (tmpfs), `~/.config/git`, `~/.config/nix`
 - User data: `~/.cache/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`
-- GitNexus: `~/.gitnexus` (read-write)
+- GitNexus: `~/.gitnexus` (read-write, only when `--with-gitnexus`)
 - Zellij: isolated temp config and cache directories

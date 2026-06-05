@@ -13,15 +13,6 @@
         "autoSaveScope": "user"
       }
     ]],
-  "mcp": {
-    "gitnexus": {
-      "type": "local",
-      "command": [
-        "gitnexus",
-        "mcp"
-      ]
-    }
-  },
   "permission": {
     "edit": {
       "/tmp/*": "allow"
@@ -37,13 +28,11 @@
     },
     "external_directory": {
       "**/.opencode/**": "allow",
-      "**/.gitnexus/**": "allow",
       "*": "allow"
     }
   },
   "instructions": [
     "~/.config/opencode/prompts/general.md",
-    "~/.config/opencode/prompts/gitnexus.md",
     "~/.config/opencode/prompts/karpathy.md"
   ]
 }

@@ -1,0 +1,19 @@
+{
+  "mcp": {
+    "gitnexus": {
+      "type": "local",
+      "command": [
+        "gitnexus",
+        "mcp"
+      ]
+    }
+  },
+  "permission": {
+    "external_directory": {
+      "**/.gitnexus/**": "allow"
+    }
+  },
+  "instructions": [
+    "~/.config/opencode/prompts/gitnexus.md"
+  ]
+}
