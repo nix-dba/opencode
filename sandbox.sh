@@ -152,7 +152,7 @@ fi
 FEATURE_BINDS=()
 GITNEXUS_BIND=()
 for feature in "${WITH_FEATURES[@]}"; do
-  feature_dir_var="${feature}_DIR"
+  feature_dir_var="${feature^^}_DIR"
   feature_dir="${!feature_dir_var}"
   [ -d "$feature_dir" ] || continue
 
@@ -258,7 +258,7 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
   sed "s|\"~/|\"$HOME/|g" "$OPENCODE_JSONC" > "$jsonc_current"
 
   for feature in "${WITH_FEATURES[@]}"; do
-    feature_dir_var="${feature}_DIR"
+    feature_dir_var="${feature^^}_DIR"
     feature_dir="${!feature_dir_var}"
     [ -d "$feature_dir" ] || continue
     overlay="$feature_dir/opencode.jsonc"
