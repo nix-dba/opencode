@@ -213,7 +213,7 @@ if [ "$KEEP_SECRETS" = false ]; then
   for ws in "${WORKSPACES[@]}"; do
     while IFS= read -r -d '' secret_dir; do
       SECRETS_SHADOW+=(--tmpfs "$secret_dir")
-    done < <(find "$ws" -type d -name secrets -print0 2>/dev/null)
+    done < <(find "$ws" -type d \( -name secrets -o -name secret \) -print0 2>/dev/null)
   done
 fi
 
