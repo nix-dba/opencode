@@ -9,6 +9,7 @@ NO_GIT_INIT=false
 WITH_FEATURES=()
 EXTRA_WORKSPACES=()
 MOUNT_SSH=false
+KEEP_SECRETS=false
 
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
@@ -35,6 +36,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --ssh-keys)
       MOUNT_SSH=true
+      shift
+      ;;
+    --keep-secrets)
+      KEEP_SECRETS=true
       shift
       ;;
     --no-net)
@@ -78,6 +83,7 @@ Options:
   --with-gitnexus           Include GitNexus code analysis tools (skills, MCP, prompts)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
+  --keep-secrets            Include 'secrets' directories (they are hidden by default)
   --no-net                  Disable network access in the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
@@ -200,6 +206,16 @@ for ws in "${WORKSPACES[@]}"; do
     WORKSPACE_BINDS+=(--bind "$ws" "$ws")
   fi
 done
+
+# Secrets directory shadowing (overridden by --keep-secrets)
+SECRETS_SHADOW=()
+if [ "$KEEP_SECRETS" = false ]; then
+  for ws in "${WORKSPACES[@]}"; do
+    while IFS= read -r -d '' secret_dir; do
+      SECRETS_SHADOW+=(--tmpfs "$secret_dir")
+    done < <(find "$ws" -type d -name secrets -print0 2>/dev/null)
+  done
+fi
 
 # Wayland binds
 WAYLAND_SOCKET="${XDG_RUNTIME_DIR:-/run/user/$UID}/${WAYLAND_DISPLAY:-wayland-0}"
@@ -347,6 +363,7 @@ BWRAP_ARGS=(
   "${FEATURE_BINDS[@]}"
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
+  "${SECRETS_SHADOW[@]}"
   --bind "$ZELLIJ_TMPDIR/config/zellij" "$HOME/.config/zellij"
   --bind "$ZELLIJ_TMPDIR/cache/zellij" "$HOME/.cache/zellij"
   --setenv TMPDIR /tmp
