@@ -34,6 +34,8 @@
         git
         wl-clipboard
         uv
+        python3
+        python3Packages.pyyaml
       ];
 
       sandbox = pkgs.writeShellApplication {
@@ -48,7 +50,8 @@
           export TUICR_CONFIG="${./default/tuicr/config.toml}"
           export MERGE_SCRIPT="${./merge-jsonc.js}"
           export GITNEXUS_DIR="${./gitnexus}"
-        '' + builtins.readFile ./sandbox.sh;
+        ''
+        + builtins.readFile ./sandbox.sh;
       };
     in
     {
