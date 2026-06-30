@@ -386,4 +386,20 @@ if [ "$DO_VERBOSE" = true ]; then
   done
 fi
 
-bwrap "${BWRAP_ARGS[@]}"
+if ! bwrap "${BWRAP_ARGS[@]}"; then
+  rc=$?
+  restricted=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null)
+  if [ "$restricted" = "1" ]; then
+    cat >&2 <<'EOF'
+Error: bubblewrap failed because AppArmor is restricting unprivileged
+user namespace creation. To fix:
+
+  echo 'kernel.apparmor_restrict_unprivileged_userns = 0' | \
+    sudo tee /etc/sysctl.d/20-apparmor-userns.conf
+  sudo sysctl -p /etc/sysctl.d/20-apparmor-userns.conf
+
+Then re-run this command.
+EOF
+  fi
+  exit "$rc"
+fi
