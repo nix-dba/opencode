@@ -134,10 +134,28 @@
         "type": "github"
       }
     },
+    "opencode-omniroute-auth-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782674814,
+        "narHash": "sha256-0xfxo6JRIl6vQ3eE0GwbPffrkjJls9vFSaSkbRJ52FI=",
+        "owner": "Alph4d0g",
+        "repo": "opencode-omniroute-auth",
+        "rev": "e85cc1e07e3832f103840a051ad62a8cffe9d14d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Alph4d0g",
+        "ref": "release/v1.2.3",
+        "repo": "opencode-omniroute-auth",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "llm-agents": "llm-agents",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_2",
+        "opencode-omniroute-auth-src": "opencode-omniroute-auth-src"
       }
     },
     "systems": {

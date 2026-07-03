@@ -294,6 +294,11 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
     jsonc_current="$merged_tmp"
   done
 
+  # Substitute ${OPENCODE_OMNIROUTE_AUTH} placeholder with the pre-built plugin path
+  if [ -n "$OMNIROUTE_AUTH_PLUGIN" ]; then
+    sed -i "s|\${OPENCODE_OMNIROUTE_AUTH}|file://$OMNIROUTE_AUTH_PLUGIN|" "$jsonc_current"
+  fi
+
   OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_current" "$HOME/.config/opencode/opencode.jsonc")
 fi
 
