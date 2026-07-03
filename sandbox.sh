@@ -10,7 +10,7 @@ WITH_FEATURES=()
 EXTRA_WORKSPACES=()
 MOUNT_SSH=false
 KEEP_SECRETS=false
-BIND_HOST_DEV=false
+BIND_SERIAL_DEV=false
 
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
@@ -31,8 +31,8 @@ while [ "$#" -gt 0 ]; do
       WITH_FEATURES+=("gitnexus")
       shift
       ;;
-    --bind-host-dev)
-      BIND_HOST_DEV=true
+    --bind-serial-dev)
+      BIND_SERIAL_DEV=true
       shift
       ;;
     --verbose|-v)
@@ -90,7 +90,7 @@ Options:
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --keep-secrets            Include 'secrets' directories (they are hidden by default)
   --no-net                  Disable network access in the sandbox
-  --bind-host-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
+  --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
 If no COMMAND is given, defaults to 'zellij' with a layout running opencode.
@@ -305,16 +305,16 @@ fi
 # Host serial device binds (ttyUSB*, ttyACM*)
 TTY_GID_ARGS=()
 HOST_DEV_BINDS=()
-if [ "$BIND_HOST_DEV" = true ]; then
+if [ "$BIND_SERIAL_DEV" = true ]; then
   dialout_entry=$(getent group dialout 2>/dev/null || true)
   if [ -z "$dialout_entry" ]; then
-    echo "Error: --bind-host-dev requires the 'dialout' group, which does not exist." >&2
+    echo "Error: --bind-serial-dev requires the 'dialout' group, which does not exist." >&2
     exit 1
   fi
   dialout_gid=$(echo "$dialout_entry" | cut -d: -f3)
   dialout_members=$(echo "$dialout_entry" | cut -d: -f4)
   if ! echo "$dialout_members" | tr ',' '\n' | grep -qx "$USER"; then
-    echo "Error: --bind-host-dev requires user '$USER' to be in the 'dialout' group." >&2
+    echo "Error: --bind-serial-dev requires user '$USER' to be in the 'dialout' group." >&2
     exit 1
   fi
   TTY_GID_ARGS=(--gid "$dialout_gid")
