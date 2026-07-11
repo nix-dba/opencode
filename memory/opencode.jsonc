@@ -1,0 +1,13 @@
+{
+  "plugin": [["@nix-dba/opencode-plugin-simple-memory@v1.1.0",
+      {
+        "autoLoad": true,
+        "autoSave": true,
+        "autoHookTimeoutMs": 100,
+        "contextLimit": 5,
+        "contextMaxChars": 1200,
+        "contextMinScore": 1,
+        "autoSaveScope": "user"
+      }
+    ]]
+}

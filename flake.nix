@@ -79,6 +79,7 @@
           export TUICR_CONFIG="${./default/tuicr/config.toml}"
           export MERGE_SCRIPT="${./merge-jsonc.js}"
           export GITNEXUS_DIR="${./gitnexus}"
+          export MEMORY_DIR="${./memory}"
           export OMNIROUTE_AUTH_PLUGIN="${omnirouteAuthPlugin}"
         ''
         + builtins.readFile ./sandbox.sh;

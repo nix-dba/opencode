@@ -23,6 +23,7 @@ Defined in `sandbox.sh:69-86`:
 | `--experimental-plan-mode` | Enable experimental planning mode |
 | `--no-git-init` | Skip git repository initialization prompt |
 | `--with-gitnexus` | Include GitNexus code analysis tools (skills, MCP, prompts) |
+| `--with-memory` | Include simple-memory plugin (context/memory features) |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
 | `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
 | `--no-net` | Disable network access in the sandbox |

@@ -31,6 +31,10 @@ while [ "$#" -gt 0 ]; do
       WITH_FEATURES+=("gitnexus")
       shift
       ;;
+    --with-memory)
+      WITH_FEATURES+=("memory")
+      shift
+      ;;
     --bind-serial-dev)
       BIND_SERIAL_DEV=true
       shift
@@ -86,6 +90,7 @@ Options:
   --experimental-plan-mode  Enable experimental plan mode
   --no-git-init             Skip git repository initialization prompt
   --with-gitnexus           Include GitNexus code analysis tools (skills, MCP, prompts)
+  --with-memory             Include simple-memory plugin (context/memory features)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --keep-secrets            Include 'secrets' directories (they are hidden by default)
