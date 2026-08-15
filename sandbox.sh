@@ -28,6 +28,11 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --with-gitnexus)
+      if ! command -v gitnexus >/dev/null 2>&1; then
+        echo "Error: gitnexus is not available in the light app." >&2
+        echo "Use 'nix run .#full' to get a sandbox with GitNexus support." >&2
+        exit 1
+      fi
       WITH_FEATURES+=("gitnexus")
       shift
       ;;
@@ -90,6 +95,7 @@ Options:
   --experimental-plan-mode  Enable experimental plan mode
   --no-git-init             Skip git repository initialization prompt
   --with-gitnexus           Include GitNexus code analysis tools (skills, MCP, prompts)
+                            Only available in the 'full' app: run via 'nix run .#full'
   --with-memory             Include simple-memory plugin (context/memory features)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
@@ -98,9 +104,22 @@ Options:
   --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
+Apps:
+  nix run .                Light app (default) - no GitNexus, bare minimum dependencies
+  nix run .#full           Full app - all dependencies including GitNexus (enabled by default)
+
 If no COMMAND is given, defaults to 'zellij' with a layout running opencode.
 EOF
   exit 0
+fi
+
+# Seed default features (set per app by the Nix flake: 'full' enables gitnexus by default)
+if [ -n "$DEFAULT_FEATURES" ]; then
+  for feature in $DEFAULT_FEATURES; do
+    if ! printf '%s\n' "${WITH_FEATURES[@]}" | grep -qx "$feature"; then
+      WITH_FEATURES+=("$feature")
+    fi
+  done
 fi
 
 mkdir -p "$HOME/.config/opencode"
@@ -192,6 +211,10 @@ for feature in "${WITH_FEATURES[@]}"; do
   # Feature-specific setup
   case "$feature" in
     gitnexus)
+      command -v gitnexus >/dev/null 2>&1 || {
+        echo "Warning: gitnexus feature enabled but binary not available; skipping setup." >&2
+        continue
+      }
       mkdir -p "$HOME/.gitnexus"
       GITNEXUS_BIND=(--bind-try "$HOME/.gitnexus" "$HOME/.gitnexus")
       if [ ! -d .gitnexus ] && [ -t 0 ]; then

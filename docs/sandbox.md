@@ -14,6 +14,15 @@ Or from the cloned repo directly:
 nix run . --refresh
 ```
 
+## Apps
+
+The flake provides two sandbox apps:
+
+- **`nix run .`** -- Light (default): bare minimum dependencies, GitNexus is not included
+- **`nix run .#full`** -- Full: all dependencies including GitNexus, GitNexus features enabled by default
+
+In the light app, the `--with-gitnexus` flag errors with a hint to use `nix run .#full`.
+
 ## CLI Flags
 
 Defined in `sandbox.sh:69-86`:
@@ -22,7 +31,7 @@ Defined in `sandbox.sh:69-86`:
 |------|-------------|
 | `--experimental-plan-mode` | Enable experimental planning mode |
 | `--no-git-init` | Skip git repository initialization prompt |
-| `--with-gitnexus` | Include GitNexus code analysis tools (skills, MCP, prompts) |
+| `--with-gitnexus` | Include GitNexus code analysis tools (skills, MCP, prompts). Only available in the full app |
 | `--with-memory` | Include simple-memory plugin (context/memory features) |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
 | `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
@@ -33,7 +42,7 @@ Defined in `sandbox.sh:69-86`:
 
 - Creates necessary directories (`~/.config/opencode`, `~/.opencode`, etc.) before sandbox entry
 - If the current directory is not a git repo, prompts to initialize one
-- If `--with-gitnexus` is passed and the repo lacks `.gitnexus`, prompts to run `gitnexus analyze --index-only`
+- If GitNexus is enabled (full app) and the repo lacks `.gitnexus`, prompts to run `gitnexus analyze --index-only`
 - Uses an isolated Zellij config (temp directory) to avoid polluting host Zellij state (`sandbox.sh:118-137`)
 - Default command is `zellij --layout <layout.kdl>` which runs opencode inside Zellij
 - If arguments are provided, they are passed directly as the sandbox command instead
@@ -50,5 +59,5 @@ The sandbox (`sandbox.sh:254-325`) mounts:
 - TLS/SSL: `/etc/ssl`, `/etc/pki`, `/etc/ca-certificates`, `/etc/nix`, `/etc/static`
 - User config: `~/.config/opencode` (read-write), `~/.config/tuicr` (tmpfs), `~/.config/git`, `~/.config/nix`
 - User data: `~/.cache/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`
-- GitNexus: `~/.gitnexus` (read-write, only when `--with-gitnexus`)
+- GitNexus: `~/.gitnexus` (read-write, only when GitNexus is enabled, i.e. the full app)
 - Zellij: isolated temp config and cache directories

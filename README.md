@@ -42,4 +42,11 @@ Or from the cloned repo directly:
 nix run . --refresh
 ```
 
-See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--skip-gitnexus`, `--no-net`, `--ssh-keys`, etc.).
+## Apps
+
+The flake provides two sandbox apps:
+
+- **`nix run .`** -- Light (default) with bare minimum dependencies, no GitNexus
+- **`nix run .#full`** -- Full with all dependencies, GitNexus enabled by default
+
+See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--no-net`, `--ssh-keys`, etc.).
