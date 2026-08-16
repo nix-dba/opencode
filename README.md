@@ -42,6 +42,12 @@ Or from the cloned repo directly:
 nix run . --refresh
 ```
 
+## Quitting
+
+Press **`ctrl+b q`** to quit. This detaches the Herdr client; because the Herdr
+server runs inside the bubblewrap sandbox, quitting also tears down the sandbox
+and all its processes. Re-run `nix run .` for a fresh session.
+
 ## Apps
 
 The flake provides two sandbox apps:
