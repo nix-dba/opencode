@@ -332,7 +332,17 @@ fi
 
 SSH_BINDS=()
 if [ "$MOUNT_SSH" = true ] && [ -d "$HOME/.ssh" ]; then
-  SSH_BINDS=(--ro-bind-try "$HOME/.ssh" "$HOME/.ssh")
+  SSH_TMPDIR=$(mktemp -d)
+  CLEANUP_FILES+=("$SSH_TMPDIR")
+  cp -rL "$HOME/.ssh"/. "$SSH_TMPDIR"/ 2>/dev/null || true
+  chmod 700 "$SSH_TMPDIR"
+  find "$SSH_TMPDIR" -type f -exec chmod 600 {} +
+  find "$SSH_TMPDIR" -type f -name '*.pub' -exec chmod 644 {} +
+  SSH_BINDS+=(--ro-bind-try "$SSH_TMPDIR" "$HOME/.ssh")
+fi
+if [ "$MOUNT_SSH" = true ] && [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+  SSH_BINDS+=(--bind-try "$SSH_AUTH_SOCK" "$SSH_AUTH_SOCK")
+  SSH_BINDS+=(--setenv SSH_AUTH_SOCK "$SSH_AUTH_SOCK")
 fi
 
 # Host serial device binds (ttyUSB*, ttyACM*)
