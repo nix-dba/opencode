@@ -11,13 +11,16 @@ General opencode configuration:
 - **permission.external_directory**: Allows access to `**/.opencode/**` and `**/.gitnexus/**`
 - **instructions**: Loads three prompt files: `general.md`, `gitnexus.md`, `karpathy.md`
 
-## Zellij Layout
+## Herdr Configuration
 
-File: `default/layout.kdl`
+Files:
+- `default/herdr/config.toml` -- Herdr session configuration
+- `default/herdr/herdr-launch.sh` -- default sandbox command
 
-A minimal Zellij layout with two panes:
-1. Main pane running `opencode` via bash
-2. Borderless status bar pane (1 line)
+The launcher starts a headless Herdr server, creates a workspace for the current
+directory, auto-launches `opencode` in its root pane, then attaches the client.
+`config.toml` disables onboarding and background update checks, and sets the
+default shell to `bash`.
 
 ## tuicr Config
 
@@ -35,7 +38,7 @@ Code review TUI settings:
 File: `flake.nix`
 
 Flake outputs:
-- `devShells.default` -- shell with all dependencies (bash, bubblewrap, bun, opencode, gitnexus, tuicr, zellij, git, wl-clipboard, uv)
+- `devShells.default` -- shell with all dependencies (bash, bubblewrap, bun, opencode, gitnexus, tuicr, herdr, jq, git, wl-clipboard, uv)
 - `apps.default` -- runs `sandbox` script
 - `formatter.default` -- `nixfmt` wrapper (formats all `*.nix` files or specified paths)
 

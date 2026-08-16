@@ -34,7 +34,8 @@
         bun
         llm-agents.packages.${system}.opencode
         llm-agents.packages.${system}.tuicr
-        zellij
+        llm-agents.packages.${system}.herdr
+        jq
         git
         wl-clipboard
         uv
@@ -86,7 +87,8 @@
             export COMMANDS_DIR="${./default/command}"
             export PROMPTS_DIR="${./default/prompts}"
             export OPENCODE_JSONC="${./default/opencode.jsonc}"
-            export LAYOUT_KDL="${./default/layout.kdl}"
+            export HERDR_CONFIG="${./default/herdr/config.toml}"
+            export HERDR_LAUNCHER="${./default/herdr/herdr-launch.sh}"
             export TUICR_CONFIG="${./default/tuicr/config.toml}"
             export MERGE_SCRIPT="${./merge-jsonc.js}"
             export GITNEXUS_DIR="${./gitnexus}"

@@ -43,8 +43,8 @@ Defined in `sandbox.sh:69-86`:
 - Creates necessary directories (`~/.config/opencode`, `~/.opencode`, etc.) before sandbox entry
 - If the current directory is not a git repo, prompts to initialize one
 - If GitNexus is enabled (full app) and the repo lacks `.gitnexus`, prompts to run `gitnexus analyze --index-only`
-- Uses an isolated Zellij config (temp directory) to avoid polluting host Zellij state (`sandbox.sh:118-137`)
-- Default command is `zellij --layout <layout.kdl>` which runs opencode inside Zellij
+- Uses an isolated Herdr config/state (temp directories) to avoid polluting host Herdr state (`sandbox.sh:147-153`)
+- Default command is `herdr-launch.sh` which starts a Herdr session and auto-launches opencode
 - If arguments are provided, they are passed directly as the sandbox command instead
 - Network binds (`docker.sock`, `resolv.conf`, `hosts`, `nsswitch.conf`) are conditional on `--no-net`
 - Wayland socket is auto-detected and mounted for GUI clipboard support
@@ -60,4 +60,4 @@ The sandbox (`sandbox.sh:254-325`) mounts:
 - User config: `~/.config/opencode` (read-write), `~/.config/tuicr` (tmpfs), `~/.config/git`, `~/.config/nix`
 - User data: `~/.cache/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`
 - GitNexus: `~/.gitnexus` (read-write, only when GitNexus is enabled, i.e. the full app)
-- Zellij: isolated temp config and cache directories
+- Herdr: isolated temp config and state directories

@@ -9,9 +9,9 @@ Each `--with-<name>` flag maps to a sibling directory `<name>/` next to `default
 default/                   # base config — always included, no optional features
 ├── opencode.jsonc         # base config (no feature-specific additions)
 ├── prompts/               # general.md, karpathy.md
-├── skill/                 # tuicr/ only
+├── skill/                 # tuicr/, herdr/
 ├── command/
-├── layout.kdl
+├── herdr/                 # config.toml, herdr-launch.sh
 └── tuicr/
 
 gitnexus/                  # overlay for --with-gitnexus

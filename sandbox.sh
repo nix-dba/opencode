@@ -108,7 +108,7 @@ Apps:
   nix run .                Light app (default) - no GitNexus, bare minimum dependencies
   nix run .#full           Full app - all dependencies including GitNexus (enabled by default)
 
-If no COMMAND is given, defaults to 'zellij' with a layout running opencode.
+If no COMMAND is given, defaults to a herdr session auto-launching opencode.
 EOF
   exit 0
 fi
@@ -144,26 +144,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Zellij isolated config (tempdir, never touches host)
-ZELLIJ_TMPDIR=$(mktemp -d)
-CLEANUP_FILES+=("$ZELLIJ_TMPDIR")
-ZELLIJ_VER=$(zellij --version | cut -d ' ' -f 2)
-mkdir -p "$ZELLIJ_TMPDIR/config/zellij"
-mkdir -p "$ZELLIJ_TMPDIR/cache/zellij/$ZELLIJ_VER"
-touch "$ZELLIJ_TMPDIR/cache/zellij/$ZELLIJ_VER/seen_release_notes"
-cat > "$ZELLIJ_TMPDIR/config/zellij/config.kdl" << 'EOF'
-show_startup_tips false
-show_release_notes false
-default_shell "bash"
-copy_command "wl-copy"
-default_mode "locked"
-
-keybinds {
-    shared_except "locked" {
-
-    }
-}
-EOF
+# Herdr isolated config/state (tempdirs, never touches host)
+HERDR_CFG_TMPDIR=$(mktemp -d)
+HERDR_STATE_TMPDIR=$(mktemp -d)
+CLEANUP_FILES+=("$HERDR_CFG_TMPDIR" "$HERDR_STATE_TMPDIR")
+cp "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$HERDR_CFG_TMPDIR/config.toml"
 
 # Git init with conditional prompt
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -371,9 +356,9 @@ if [ "$BIND_SERIAL_DEV" = true ]; then
   fi
 fi
 
-# Default command: zellij with layout, or user override
+# Default command: herdr session auto-launching opencode, or user override
 if [ $# -eq 0 ]; then
-  CMD=(zellij --layout "$LAYOUT_KDL")
+  CMD=(bash "$HOME/.herdr-launch.sh")
 else
   CMD=("$@")
 fi
@@ -441,8 +426,10 @@ BWRAP_ARGS=(
   "${OPENCODE_JSONC_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   "${SECRETS_SHADOW[@]}"
-  --bind "$ZELLIJ_TMPDIR/config/zellij" "$HOME/.config/zellij"
-  --bind "$ZELLIJ_TMPDIR/cache/zellij" "$HOME/.cache/zellij"
+  --ro-bind-try "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$HOME/.herdr-launch.sh"
+  --bind "$HERDR_CFG_TMPDIR" "$HOME/.config/herdr"
+  --bind "$HERDR_STATE_TMPDIR" "$HOME/.local/state/herdr"
+  --setenv HERDR_CONFIG_PATH "$HOME/.config/herdr/config.toml"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0

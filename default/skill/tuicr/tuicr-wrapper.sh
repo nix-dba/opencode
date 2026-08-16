@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Configuration - override via environment variables
-TUICR_POPUP_SIZE="${TUICR_POPUP_SIZE:-90}"              # percentage of terminal
-
 log_info() {
   echo "$*"
 }
@@ -19,23 +16,19 @@ usage() {
   cat << EOF
 Usage: $(basename "$0") [directory]
 
-Launch tuicr in a Zellij floating pane to review git changes.
+Launch tuicr in a new Herdr tab to review git changes.
 
 Arguments:
   directory    Git repository directory to review (default: current directory)
 
-Environment variables:
-  TUICR_POPUP_SIZE      Size of floating popup as percentage (default: 90)
-
 Examples:
   $(basename "$0")                    # Review changes in current directory
   $(basename "$0") ~/project          # Review changes in ~/project
-  TUICR_POPUP_SIZE=70 $(basename "$0") # Use 70% of screen
 EOF
 }
 
-check_zellij() {
-  if [[ -z "${ZELLIJ_SESSION_NAME:-}" ]]; then
+check_herdr() {
+  if [[ "${HERDR_ENV:-}" != "1" ]]; then
     return 1
   fi
   return 0
@@ -57,33 +50,33 @@ check_git_repo() {
   return 0
 }
 
-launch_tuicr_pane() {
+launch_tuicr_tab() {
   local target_dir="$1"
   local output_file="/tmp/tuicr-output-$$"
+  local tab_id pane_id
 
-  # Check if --stdout is supported and set up output capture
-  local tuicr_cmd
-  tuicr_cmd="tuicr -w --stdout > '$output_file'"
+  # Open a new tab (focusing it so the user sees tuicr) and run tuicr there,
+  # exporting any approved instructions to stdout.
+  local resp
+  resp=$(herdr tab create --cwd "$target_dir" --label tuicr --focus)
+  tab_id=$(printf '%s' "$resp" | jq -r '.result.tab.tab_id')
+  pane_id=$(printf '%s' "$resp" | jq -r '.result.root_pane.pane_id')
 
-  # log_info "Directory: $target_dir"
+  # Close the tab and clean up on any exit
+  trap 'herdr tab close "$tab_id" 2>/dev/null; rm -f "$output_file"' EXIT
 
-  # Launch tuicr in a floating pane and block until it exits
-  zellij run \
-    --floating \
-    --blocking \
-    --close-on-exit \
-    --cwd "$target_dir" \
-    --height "${TUICR_POPUP_SIZE}%" \
-    --width "${TUICR_POPUP_SIZE}%" \
-    -- bash -c "$tuicr_cmd"
+  herdr pane run "$pane_id" "tuicr -w --stdout > '$output_file'"
 
-  # Press y to exit tuicr and export the comments
+  # Block until tuicr exits (foreground process returns to the shell)
+  while herdr pane process-info --pane "$pane_id" 2>/dev/null | grep -qi tuicr; do
+    sleep 1
+  done
+
   if [[ -s "$output_file" ]]; then
     cat "$output_file"
   else
     log_info "Nothing to do. Everything's fine"
   fi
-  rm -f "$output_file"
 }
 
 main() {
@@ -104,12 +97,12 @@ main() {
     exit 1
   fi
 
-  if ! check_zellij; then
-    log_error "Not running inside Zellij!"
+  if ! check_herdr; then
+    log_error "Not running inside Herdr!"
     exit 1
   fi
 
-  launch_tuicr_pane "$target_dir"
+  launch_tuicr_tab "$target_dir"
 }
 
 main "$@"

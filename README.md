@@ -9,14 +9,14 @@ Sandboxed opencode environment with code intelligence, running via Nix with Bubb
 - [Commands](docs/commands.md) -- Custom `/commit`, `/docs`, `/tuicr` commands
 - [Skills](docs/skills.md) -- GitNexus and tuicr skills available to the agent
 - [Prompts](docs/prompts.md) -- Agent instruction files (general, gitnexus, karpathy)
-- [Configuration](docs/configuration.md) -- opencode.jsonc, Zellij layout, tuicr config, Nix flake
+- [Configuration](docs/configuration.md) -- opencode.jsonc, Herdr config, tuicr config, Nix flake
 
 ## Features
 
 - **Bubblewrap sandbox** (`sandbox.sh`) -- Isolates opencode from the host filesystem to reduce secret exposure risk
-- **Zellij terminal workspace** -- Layout auto-launches opencode with a status bar
+- **Herdr terminal workspace** -- Agent-native session that auto-launches opencode
 - **GitNexus** -- Local knowledge graph for code intelligence (call chains, execution flows, impact analysis)
-- **tuicr** -- TUI code review tool with vim keybindings, launched via `/tuicr` command in a Zellij floating pane
+- **tuicr** -- TUI code review tool with vim keybindings, launched via `/tuicr` command in a Herdr tab
 - **Custom opencode commands** -- `/commit` (conventional commits), `/docs` (documentation generation), `/tuicr` (code review)
 - **Custom agent prompts** -- General guidelines, GitNexus rules, and Karpathy-style coding rules loaded into every session
 - **GitNexus skill set** -- 7 skills for exploring, debugging, impact analysis, PR review, refactoring, CLI, and guidance

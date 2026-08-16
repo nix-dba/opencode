@@ -3,7 +3,7 @@
 This repository provides a Nix flake-based sandboxed opencode environment. It packages opencode with:
 
 - **Bubblewrap sandbox** (`sandbox.sh`) -- isolates opencode from the host filesystem to reduce secret exposure risk
-- **Zellij** terminal workspace with a layout that auto-launches opencode
+- **Herdr** terminal workspace (agent-native session) that auto-launches opencode
 - **GitNexus** -- local knowledge graph for code intelligence (call chains, execution flows, impact analysis)
 - **tuicr** -- TUI code review tool with vim keybindings, launched via `/tuicr` command
 - **Custom opencode commands**: `/commit`, `/docs`, `/tuicr`
