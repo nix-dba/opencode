@@ -11,6 +11,8 @@ EXTRA_WORKSPACES=()
 MOUNT_SSH=false
 KEEP_SECRETS=false
 BIND_SERIAL_DEV=false
+NO_SANDBOX=false
+RO_BINDS=()
 
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
@@ -54,6 +56,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --keep-secrets)
       KEEP_SECRETS=true
+      shift
+      ;;
+    --no-sandbox)
+      NO_SANDBOX=true
       shift
       ;;
     --no-net)
@@ -102,6 +108,8 @@ Options:
   --keep-secrets            Include 'secrets' directories (they are hidden by default)
   --no-net                  Disable network access in the sandbox
   --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
+  --no-sandbox              Run opencode directly without bubblewrap; configs are
+                            mirrored into a temporary XDG_CONFIG_HOME
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
 Apps:
@@ -122,33 +130,66 @@ if [ -n "$DEFAULT_FEATURES" ]; then
   done
 fi
 
-mkdir -p "$HOME/.config/opencode"
-mkdir -p "$HOME/.config/opencode/command"
-mkdir -p "$HOME/.config/tuicr"
-mkdir -p "$HOME/.config/opencode/prompts"
-mkdir -p "$HOME/.config/opencode/skill"
-mkdir -p "$HOME/.opencode"
-mkdir -p "$HOME/.local/share/opencode"
-mkdir -p "$HOME/.local/state/opencode"
-mkdir -p "$HOME/.cache/opencode"
+if [ "$NO_SANDBOX" != true ]; then
+  mkdir -p "$HOME/.config/opencode"
+  mkdir -p "$HOME/.config/opencode/command"
+  mkdir -p "$HOME/.config/tuicr"
+  mkdir -p "$HOME/.config/opencode/prompts"
+  mkdir -p "$HOME/.config/opencode/skill"
+  mkdir -p "$HOME/.opencode"
+  mkdir -p "$HOME/.local/share/opencode"
+  mkdir -p "$HOME/.local/state/opencode"
+  mkdir -p "$HOME/.cache/opencode"
+fi
 
 # Temp files cleanup
 # Script location for referencing bundled configs
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 CLEANUP_FILES=()
+
+# No-sandbox mode: mirror host ~/.config into a temp XDG home and overlay the bundle
+CFG_TMP=""
+XDG_CFG=""
+XDG_STATE=""
+CFG_BASE="$HOME/.config/opencode"
+if [ "$NO_SANDBOX" = true ]; then
+  CFG_TMP=$(mktemp -d)
+  XDG_CFG="$CFG_TMP/xdg-config"
+  XDG_STATE="$CFG_TMP/xdg-state"
+  CFG_BASE="$XDG_CFG/opencode"
+  mkdir -p "$CFG_BASE" "$XDG_CFG/herdr" "$XDG_CFG/tuicr" "$XDG_STATE"
+  CLEANUP_FILES+=("$CFG_TMP")
+  [ -d "$HOME/.config" ] && cp -r "$HOME/.config/." "$XDG_CFG/"
+fi
+
+# Install a config artifact: read-only bind in sandbox mode, copy into the temp tree otherwise
+install_ro() {
+  local src="$1" dst="$2"
+  if [ "$NO_SANDBOX" = true ]; then
+    mkdir -p "$(dirname "$dst")"
+    cp -r "$src" "$dst"
+  else
+    RO_BINDS+=(--ro-bind-try "$src" "$dst")
+  fi
+}
+
 cleanup() {
   rm -rf "${CLEANUP_FILES[@]}"
-  find "$HOME/.config/opencode" -mindepth 1 -type f -empty -delete 2>/dev/null
-  find "$HOME/.config/opencode" -mindepth 1 -type d -empty -delete 2>/dev/null
+  if [ "$NO_SANDBOX" != true ]; then
+    find "$HOME/.config/opencode" -mindepth 1 -type f -empty -delete 2>/dev/null
+    find "$HOME/.config/opencode" -mindepth 1 -type d -empty -delete 2>/dev/null
+  fi
 }
 trap cleanup EXIT
 
-# Herdr isolated config/state (tempdirs, never touches host)
-HERDR_CFG_TMPDIR=$(mktemp -d)
-HERDR_STATE_TMPDIR=$(mktemp -d)
-CLEANUP_FILES+=("$HERDR_CFG_TMPDIR" "$HERDR_STATE_TMPDIR")
-cp "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$HERDR_CFG_TMPDIR/config.toml"
+# Herdr isolated config/state (tempdirs, never touches host); no-sandbox uses CFG_TMP
+if [ "$NO_SANDBOX" != true ]; then
+  HERDR_CFG_TMPDIR=$(mktemp -d)
+  HERDR_STATE_TMPDIR=$(mktemp -d)
+  CLEANUP_FILES+=("$HERDR_CFG_TMPDIR" "$HERDR_STATE_TMPDIR")
+  cp "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$HERDR_CFG_TMPDIR/config.toml"
+fi
 
 # Git init with conditional prompt
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -168,54 +209,6 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     esac
   fi
 fi
-
-# Feature setup (per --with-<name> flags)
-FEATURE_BINDS=()
-GITNEXUS_BIND=()
-for feature in "${WITH_FEATURES[@]}"; do
-  feature_dir_var="${feature^^}_DIR"
-  feature_dir="${!feature_dir_var}"
-  [ -d "$feature_dir" ] || continue
-
-  # Skills
-  if [ -d "$feature_dir/skill" ]; then
-    for skill_path in "$feature_dir/skill"/*; do
-      [ -d "$skill_path" ] || continue
-      FEATURE_BINDS+=(--ro-bind-try "$skill_path" "$HOME/.config/opencode/skill/$(basename "$skill_path")")
-    done
-  fi
-
-  # Prompts
-  if [ -d "$feature_dir/prompts" ]; then
-    for prompt_file in "$feature_dir/prompts"/*.md; do
-      [ -f "$prompt_file" ] || continue
-      FEATURE_BINDS+=(--ro-bind-try "$prompt_file" "$HOME/.config/opencode/prompts/$(basename "$prompt_file")")
-    done
-  fi
-
-  # Feature-specific setup
-  case "$feature" in
-    gitnexus)
-      command -v gitnexus >/dev/null 2>&1 || {
-        echo "Warning: gitnexus feature enabled but binary not available; skipping setup." >&2
-        continue
-      }
-      mkdir -p "$HOME/.gitnexus"
-      GITNEXUS_BIND=(--bind-try "$HOME/.gitnexus" "$HOME/.gitnexus")
-      if [ ! -d .gitnexus ] && [ -t 0 ]; then
-        read -r -p "$PWD is not analysed via gitnexus. Analyse now? (y/N): " answer
-        case "$answer" in
-          [YyjJ]* )
-            gitnexus analyze --index-only
-            ;;
-          * )
-            echo "Skipped gitnexus analyze"
-            ;;
-        esac
-      fi
-      ;;
-  esac
-done
 
 # Workspace binds
 WORKSPACES=("$PWD" "${EXTRA_WORKSPACES[@]}")
@@ -255,38 +248,81 @@ if [ "${#NET_ARGS[@]}" -gt 0 ]; then
   )
 fi
 
-# Skill bind mounts (individual, preserves user's own skills)
-SKILL_BINDS=()
+# Skill config artifacts (bundled defaults; user's own skills come from the host mirror in no-sandbox mode)
 if [ -n "$SKILL_DIR" ] && [ -d "$SKILL_DIR" ]; then
   for skill_path in "$SKILL_DIR"/*; do
     [ -d "$skill_path" ] || continue
     skill_name=$(basename "$skill_path")
-    SKILL_BINDS+=(--ro-bind-try "$skill_path" "$HOME/.config/opencode/skill/$skill_name")
+    install_ro "$skill_path" "$CFG_BASE/skill/$skill_name"
   done
 fi
 
-# Prompt bind mounts (individual .md files)
-PROMPT_BINDS=()
+# Prompt config artifacts (individual .md files)
 if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
   for prompt_file in "$PROMPTS_DIR"/*.md; do
     [ -f "$prompt_file" ] || continue
     prompt_name=$(basename "$prompt_file")
-    PROMPT_BINDS+=(--ro-bind-try "$prompt_file" "$HOME/.config/opencode/prompts/$prompt_name")
+    install_ro "$prompt_file" "$CFG_BASE/prompts/$prompt_name"
   done
 fi
 
-# Command bind mounts (individual .md files)
-COMMAND_BINDS=()
+# Command config artifacts (individual .md files)
 if [ -n "$COMMANDS_DIR" ] && [ -d "$COMMANDS_DIR" ]; then
   for cmd_file in "$COMMANDS_DIR"/*.md; do
     [ -f "$cmd_file" ] || continue
     cmd_name=$(basename "$cmd_file")
-    COMMAND_BINDS+=(--ro-bind-try "$cmd_file" "$HOME/.config/opencode/command/$cmd_name")
+    install_ro "$cmd_file" "$CFG_BASE/command/$cmd_name"
   done
 fi
 
-# opencode.jsonc bind mount (merge overlays for each enabled feature)
-OPENCODE_JSONC_BINDS=()
+# Feature setup (per --with-<name> flags) — appended after default artifacts so features win
+GITNEXUS_BIND=()
+for feature in "${WITH_FEATURES[@]}"; do
+  feature_dir_var="${feature^^}_DIR"
+  feature_dir="${!feature_dir_var}"
+  [ -d "$feature_dir" ] || continue
+
+  # Skills
+  if [ -d "$feature_dir/skill" ]; then
+    for skill_path in "$feature_dir/skill"/*; do
+      [ -d "$skill_path" ] || continue
+      install_ro "$skill_path" "$CFG_BASE/skill/$(basename "$skill_path")"
+    done
+  fi
+
+  # Prompts
+  if [ -d "$feature_dir/prompts" ]; then
+    for prompt_file in "$feature_dir/prompts"/*.md; do
+      [ -f "$prompt_file" ] || continue
+      install_ro "$prompt_file" "$CFG_BASE/prompts/$(basename "$prompt_file")"
+    done
+  fi
+
+  # Feature-specific setup
+  case "$feature" in
+    gitnexus)
+      command -v gitnexus >/dev/null 2>&1 || {
+        echo "Warning: gitnexus feature enabled but binary not available; skipping setup." >&2
+        continue
+      }
+      mkdir -p "$HOME/.gitnexus"
+      GITNEXUS_BIND=(--bind-try "$HOME/.gitnexus" "$HOME/.gitnexus")
+      if [ ! -d .gitnexus ] && [ -t 0 ]; then
+        read -r -p "$PWD is not analysed via gitnexus. Analyse now? (y/N): " answer
+        case "$answer" in
+          [YyjJ]* )
+            gitnexus analyze --index-only
+            ;;
+          * )
+            echo "Skipped gitnexus analyze"
+            ;;
+        esac
+      fi
+      ;;
+  esac
+done
+
+# opencode.jsonc (merge overlays for each enabled feature)
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
   jsonc_current=$(mktemp)
   CLEANUP_FILES+=("$jsonc_current")
@@ -312,7 +348,12 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
     sed -i "s|\${OPENCODE_OMNIROUTE_AUTH}|file://$OMNIROUTE_AUTH_PLUGIN|" "$jsonc_current"
   fi
 
-  OPENCODE_JSONC_BINDS+=(--ro-bind-try "$jsonc_current" "$HOME/.config/opencode/opencode.jsonc")
+  if [ "$NO_SANDBOX" = true ]; then
+    cp "$jsonc_current" "$CFG_BASE/opencode.jsonc"
+    export OPENCODE_CONFIG="$CFG_BASE/opencode.jsonc"
+  else
+    RO_BINDS+=(--ro-bind-try "$jsonc_current" "$HOME/.config/opencode/opencode.jsonc")
+  fi
 fi
 
 SSH_BINDS=()
@@ -356,11 +397,71 @@ if [ "$BIND_SERIAL_DEV" = true ]; then
   fi
 fi
 
+# No-sandbox: finalize the temp config tree (herdr/tuicr overlays, launcher, path rewrite)
+if [ "$NO_SANDBOX" = true ]; then
+  install_ro "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$XDG_CFG/herdr/config.toml"
+  install_ro "${TUICR_CONFIG:-$SCRIPT_DIR/default/tuicr/config.toml}" "$XDG_CFG/tuicr/config.toml"
+  cp "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$CFG_TMP/herdr-launch.sh"
+  sed -i 's|socket="$HOME/.config/herdr/herdr.sock"|socket="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"|' "$CFG_TMP/herdr-launch.sh"
+  find "$CFG_BASE" -type f \( -name '*.md' -o -name '*.jsonc' -o -name '*.sh' \) -exec \
+    sed -i -e "s|\$HOME/.config/opencode|$CFG_BASE|g" \
+           -e "s|$HOME/.config/opencode|$CFG_BASE|g" \
+           -e "s|~/.config/opencode|$CFG_BASE|g" {} + 2>/dev/null || true
+fi
+
 # Default command: herdr session auto-launching opencode, or user override
 if [ $# -eq 0 ]; then
-  CMD=(bash "$HOME/.herdr-launch.sh")
+  if [ "$NO_SANDBOX" = true ]; then
+    CMD=(bash "$CFG_TMP/herdr-launch.sh")
+  else
+    CMD=(bash "$HOME/.herdr-launch.sh")
+  fi
 else
   CMD=("$@")
+fi
+
+# No-sandbox: run opencode directly with a temp XDG config/state home
+if [ "$NO_SANDBOX" = true ]; then
+  export XDG_CONFIG_HOME="$XDG_CFG"
+  export XDG_STATE_HOME="$XDG_STATE"
+  export OPENCODE_CONFIG_DIR="$CFG_BASE"
+  export HERDR_CONFIG_PATH="$XDG_CFG/herdr/config.toml"
+  export HERDR_SOCKET_PATH="$XDG_CFG/herdr/herdr.sock"
+  export TMPDIR=/tmp
+  export OPENCODE_DISABLE_AUTOCOMPACT=1
+  export NODE_TLS_REJECT_UNAUTHORIZED=0
+  export CARGO_NET_OFFLINE=false
+  export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+  export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+  export GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
+
+  if [ "${#EXPERIMENTAL_ARGS[@]}" -gt 0 ]; then
+    export OPENCODE_EXPERIMENTAL=1
+    export OPENCODE_EXPERIMENTAL_PLAN_MODE=1
+  fi
+
+  [ "${#NET_ARGS[@]}" -eq 0 ] && echo "Warning: --no-net cannot be enforced without the sandbox." >&2
+  [ "$MOUNT_SSH" = true ] && echo "Warning: --ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
+  [ "$BIND_SERIAL_DEV" = true ] && echo "Warning: --bind-serial-dev is a no-op without the sandbox (devices are already accessible)." >&2
+  echo "Warning: running without the sandbox: secrets/secret directories in workspaces are NOT hidden." >&2
+
+  if [ "$DO_VERBOSE" = true ]; then
+    echo "opencode (no sandbox):"
+    echo "  XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
+    echo "  OPENCODE_CONFIG=$OPENCODE_CONFIG"
+    echo "  HERDR_CONFIG_PATH=$HERDR_CONFIG_PATH"
+    echo "  HERDR_SOCKET_PATH=$HERDR_SOCKET_PATH"
+    echo "  CMD: ${CMD[*]}"
+  fi
+
+  # Run in-process (not exec) so the EXIT trap cleans up the temp tree afterwards.
+  "${CMD[@]}"
+  rc=$?
+  # Stop the session's herdr server (matches the sandbox, where --die-with-parent does this).
+  if [ -n "${HERDR_SOCKET_PATH:-}" ] && [ -S "$HERDR_SOCKET_PATH" ]; then
+    herdr server stop >/dev/null 2>&1 || true
+  fi
+  exit $rc
 fi
 
 # Assemble bwrap arguments
@@ -419,11 +520,7 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
   "${GITNEXUS_BIND[@]}"
   "${SSH_BINDS[@]}"
-  "${SKILL_BINDS[@]}"
-  "${PROMPT_BINDS[@]}"
-  "${COMMAND_BINDS[@]}"
-  "${FEATURE_BINDS[@]}"
-  "${OPENCODE_JSONC_BINDS[@]}"
+  "${RO_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
   "${SECRETS_SHADOW[@]}"
   --ro-bind-try "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$HOME/.herdr-launch.sh"

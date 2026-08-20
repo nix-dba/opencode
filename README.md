@@ -13,7 +13,7 @@ Sandboxed opencode environment with code intelligence, running via Nix with Bubb
 
 ## Features
 
-- **Bubblewrap sandbox** (`sandbox.sh`) -- Isolates opencode from the host filesystem to reduce secret exposure risk
+- **Bubblewrap sandbox** (`sandbox.sh`) -- Isolates opencode from the host filesystem to reduce secret exposure risk (opt out with `--no-sandbox` to run directly on the host)
 - **Herdr terminal workspace** -- Agent-native session that auto-launches opencode
 - **GitNexus** -- Local knowledge graph for code intelligence (call chains, execution flows, impact analysis)
 - **tuicr** -- TUI code review tool with vim keybindings, launched via `/tuicr` command in a Herdr tab
@@ -55,4 +55,4 @@ The flake provides two sandbox apps:
 - **`nix run .`** -- Light (default) with bare minimum dependencies, no GitNexus
 - **`nix run .#full`** -- Full with all dependencies, GitNexus enabled by default
 
-See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--no-net`, `--ssh-keys`, etc.).
+See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--no-net`, `--ssh-keys`, `--no-sandbox`, etc.).
