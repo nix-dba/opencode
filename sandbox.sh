@@ -402,7 +402,7 @@ if [ "$NO_SANDBOX" = true ]; then
   install_ro "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$XDG_CFG/herdr/config.toml"
   install_ro "${TUICR_CONFIG:-$SCRIPT_DIR/default/tuicr/config.toml}" "$XDG_CFG/tuicr/config.toml"
   cp "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$CFG_TMP/herdr-launch.sh"
-  sed -i 's|socket="$HOME/.config/herdr/herdr.sock"|socket="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"|' "$CFG_TMP/herdr-launch.sh"
+  sed -i "s|socket=\"$HOME/.config/herdr/herdr.sock\"|socket=\"${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}\"|" "$CFG_TMP/herdr-launch.sh"
   find "$CFG_BASE" -type f \( -name '*.md' -o -name '*.jsonc' -o -name '*.sh' \) -exec \
     sed -i -e "s|\$HOME/.config/opencode|$CFG_BASE|g" \
            -e "s|$HOME/.config/opencode|$CFG_BASE|g" \
