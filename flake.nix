@@ -28,11 +28,29 @@
         inherit system;
       };
 
+      # opencode with the startup/CLI logo blanked out.
+      #
+      # The llm-agents opencode package installs the prebuilt release tarball
+      # (no source), so we patch the compiled binary instead: right after the
+      # tarball is unpacked, blank-logo.py replaces the logo art strings with
+      # equal-length spaces (byte count is preserved, so the binary stays
+      # intact and the wrapBuddy fixup in the next phase is unaffected).
+      #
+      # The patch is anchored + assertion-guarded: if a future release changes
+      # or removes the logo art, the build fails with a clear message instead
+      # of silently doing nothing (see patches/blank-logo.py).
+      opencodeNoLogo = (llm-agents.packages.${system}.opencode).overrideAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.python3 ];
+        postUnpack = ''
+          python3 ${./patches/blank-logo.py} ./opencode
+        '';
+      });
+
       lightShellInputs = with pkgs; [
         bash
         bubblewrap
         bun
-        llm-agents.packages.${system}.opencode
+        opencodeNoLogo
         llm-agents.packages.${system}.tuicr
         llm-agents.packages.${system}.herdr
         jq
