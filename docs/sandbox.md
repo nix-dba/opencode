@@ -35,6 +35,7 @@ Defined in `sandbox.sh:18-90`:
 | `--with-memory` | Include simple-memory plugin (context/memory features) |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
 | `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
+| `--hide-secrets` | Hide `secrets`/`secret` directories in workspaces (they are visible by default) |
 | `--no-net` | Disable network access in the sandbox |
 | `--no-sandbox` | Run opencode directly without bubblewrap. Configs are mirrored into a temporary `XDG_CONFIG_HOME` (see below) |
 | `-w`, `--workspace PATH` | Bind additional workspace directory (repeatable) |
@@ -78,6 +79,6 @@ Because everything lives in a temp dir, nothing persists after the session — s
 **Not enforceable without the sandbox** (warned on stderr):
 - `--no-net` cannot disable network access
 - `--ssh-keys` and `--bind-serial-dev` are no-ops (SSH keys and devices are already accessible)
-- `secrets`/`secret` directories in workspaces are **not** hidden
+- `--hide-secrets` is a no-op (`secrets`/`secret` directories are not hidden)
 
 The config mirror only affects the session's environment (`XDG_CONFIG_HOME`/`XDG_STATE_HOME`); `HOME`-based files (`~/.gitconfig`, `~/.cargo`, etc.) behave exactly as on the host.

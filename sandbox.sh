@@ -9,7 +9,7 @@ NO_GIT_INIT=false
 WITH_FEATURES=()
 EXTRA_WORKSPACES=()
 MOUNT_SSH=false
-KEEP_SECRETS=false
+KEEP_SECRETS=true
 BIND_SERIAL_DEV=false
 NO_SANDBOX=false
 RO_BINDS=()
@@ -54,8 +54,8 @@ while [ "$#" -gt 0 ]; do
       MOUNT_SSH=true
       shift
       ;;
-    --keep-secrets)
-      KEEP_SECRETS=true
+    --hide-secrets)
+      KEEP_SECRETS=false
       shift
       ;;
     --no-sandbox)
@@ -105,7 +105,7 @@ Options:
   --with-memory             Include simple-memory plugin (context/memory features)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
-  --keep-secrets            Include 'secrets' directories (they are hidden by default)
+  --hide-secrets            Hide 'secrets'/'secret' directories (they are visible by default)
   --no-net                  Disable network access in the sandbox
   --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
   --no-sandbox              Run opencode directly without bubblewrap; configs are
@@ -219,7 +219,7 @@ for ws in "${WORKSPACES[@]}"; do
   fi
 done
 
-# Secrets directory shadowing (overridden by --keep-secrets)
+# Secrets directory shadowing (opt-in via --hide-secrets)
 SECRETS_SHADOW=()
 if [ "$KEEP_SECRETS" = false ]; then
   for ws in "${WORKSPACES[@]}"; do
@@ -443,7 +443,9 @@ if [ "$NO_SANDBOX" = true ]; then
   [ "${#NET_ARGS[@]}" -eq 0 ] && echo "Warning: --no-net cannot be enforced without the sandbox." >&2
   [ "$MOUNT_SSH" = true ] && echo "Warning: --ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
   [ "$BIND_SERIAL_DEV" = true ] && echo "Warning: --bind-serial-dev is a no-op without the sandbox (devices are already accessible)." >&2
-  echo "Warning: running without the sandbox: secrets/secret directories in workspaces are NOT hidden." >&2
+  if [ "$KEEP_SECRETS" = false ]; then
+    echo "Warning: --hide-secrets cannot be enforced without the sandbox: secrets/secret directories in workspaces are NOT hidden." >&2
+  fi
 
   if [ "$DO_VERBOSE" = true ]; then
     echo "opencode (no sandbox):"
