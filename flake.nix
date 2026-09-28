@@ -57,8 +57,7 @@
         git
         wl-clipboard
         uv
-        python3
-        python3Packages.pyyaml
+        (python3.withPackages (ps: [ ps.pyyaml ]))
       ];
 
       fullShellInputs = lightShellInputs ++ [
