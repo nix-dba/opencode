@@ -9,8 +9,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     llm-agents.url = "github:numtide/llm-agents.nix";
-    opencode-omniroute-auth-src = {
-      url = "github:Alph4d0g/opencode-omniroute-auth/release/v1.2.3";
+    omniroute-src = {
+      url = "github:diegosouzapw/OmniRoute/v3.8.51";
       flake = false;
     };
   };
@@ -20,7 +20,7 @@
       self,
       nixpkgs,
       llm-agents,
-      opencode-omniroute-auth-src,
+      omniroute-src,
     }:
     let
       system = "x86_64-linux";
@@ -28,21 +28,28 @@
         inherit system;
       };
 
-      # opencode with the startup/CLI logo blanked out.
+      # opencode2 with the startup/CLI logo blanked out.
       #
-      # The llm-agents opencode package installs the prebuilt release tarball
+      # The llm-agents opencode2 package installs the prebuilt release tarball
       # (no source), so we patch the compiled binary instead: right after the
       # tarball is unpacked, blank-logo.py replaces the logo art strings with
       # equal-length spaces (byte count is preserved, so the binary stays
       # intact and the wrapBuddy fixup in the next phase is unaffected).
       #
-      # The patch is anchored + assertion-guarded: if a future release changes
-      # or removes the logo art, the build fails with a clear message instead
-      # of silently doing nothing (see patches/blank-logo.py).
-      opencodeNoLogo = (llm-agents.packages.${system}.opencode).overrideAttrs (old: {
+      # opencode2 ships inside a top-level `package/` directory (sourceRoot),
+      # so the binary path is resolved with find rather than a fixed relative
+      # path. The patch is anchored + assertion-guarded: if a future release
+      # changes or removes the logo art, the build fails with a clear message
+      # instead of silently doing nothing (see patches/blank-logo.py).
+      opencode2NoLogo = (llm-agents.packages.${system}.opencode2).overrideAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.python3 ];
         postUnpack = ''
-          python3 ${./patches/blank-logo.py} ./opencode
+          opencode_bin=$(find . -type f -path '*/bin/opencode' | head -n1)
+          if [ -z "$opencode_bin" ]; then
+            echo "ERROR: could not locate the opencode2 binary after unpack" >&2
+            exit 1
+          fi
+          python3 ${./patches/blank-logo.py} "$opencode_bin"
         '';
       });
 
@@ -50,43 +57,68 @@
         bash
         bubblewrap
         bun
-        opencodeNoLogo
+        opencode2NoLogo
         llm-agents.packages.${system}.tuicr
         llm-agents.packages.${system}.herdr
         jq
         git
+        gitui
+        curl
         wl-clipboard
         uv
         (python3.withPackages (ps: [ ps.pyyaml ]))
       ];
 
-      fullShellInputs = lightShellInputs ++ [
-        llm-agents.packages.${system}.gitnexus
-      ];
-
-      omnirouteAuthPlugin =
+      # Official OmniRoute OpenCode v2 plugin, built from the pinned OmniRoute
+      # source checkout. The package ships a root server.js entrypoint that
+      # OpenCode probes; dist/ alone is not enough, so it must land in $out.
+      #
+      # dist/index.js imports `{ Plugin } from "@opencode/plugin"` at runtime.
+      # A `file://` plugin has no install step, so the host's Bun loader resolves
+      # bare specifiers from the plugin directory's own node_modules; without it
+      # the plugin dies with `Cannot find package '@opencode/plugin'`. The host
+      # only virtualizes `@opencode/plugin/tui`, not the server root. Ship the
+      # runtime closure of that peer dependency in $out/node_modules.
+      omniroutePluginV2 =
         let
-          # Source with vendored package-lock.json (required by fetchNpmDeps)
-          opencode-omniroute-auth-src-with-lock = pkgs.runCommand "opencode-omniroute-auth-with-lock" { } ''
-            cp -r ${opencode-omniroute-auth-src} $out
-            chmod -R +w $out
-            cp ${./opencode-omniroute-auth-package-lock.json} $out/package-lock.json
-          '';
+          # The upstream package-lock.json omits `resolved` URLs for many
+          # packages, which makes npm's offline cache incomplete. Overlay a
+          # complete lockfile (regenerated with `npm install
+          # --package-lock-only`) so fetchNpmDeps can cache every tarball.
+          #
+          # @opencode/plugin is promoted from devDependencies to dependencies
+          # so `npm prune --omit=dev` in installPhase keeps it (and its
+          # closure) while dropping the build toolchain. The lockfile tracks
+          # that promotion.
+          omniroute-plugin-v2-src =
+            pkgs.runCommand "opencode-plugin-v2-src"
+              {
+                nativeBuildInputs = [ pkgs.jq ];
+              }
+              ''
+                cp -r ${omniroute-src}/@omniroute/opencode-plugin-v2 $out
+                chmod -R +w $out
+                cp ${./opencode-plugin-v2-package-lock.json} $out/package-lock.json
+                jq 'del(.devDependencies["@opencode/plugin"])
+                    | .dependencies["@opencode/plugin"] = "2.0.12"' \
+                  "$out/package.json" > "$out/package.json.tmp"
+                mv "$out/package.json.tmp" "$out/package.json"
+              '';
         in
-        pkgs.buildNpmPackage {
-          name = "opencode-omniroute-auth";
-          src = opencode-omniroute-auth-src-with-lock;
-          npmDeps = pkgs.fetchNpmDeps {
-            src = opencode-omniroute-auth-src-with-lock;
-            hash = "sha256-YKhVxYV+Yz05xCmDocVtXhWsK7Olc+rsKRQ45kcacSM=";
-          };
-          npmFlags = [ "--legacy-peer-deps" ];
-          buildPhase = ''
-            npm run build
-          '';
+        (pkgs.buildNpmPackage.override { nodejs = pkgs.nodejs_22; }) {
+          pname = "opencode-plugin-v2";
+          version = "0.1.0";
+          src = omniroute-plugin-v2-src;
+          npmDepsHash = "sha256-/jL0NbjwOVxEUntyD3Cw/QtWrJo0xwC9eqSnsjwAxm8=";
           installPhase = ''
+            runHook preInstall
+            # Drop the build toolchain (tsup/typescript/...); keep zod, the
+            # @opencode/plugin peer, and its runtime closure.
+            npm prune --omit=dev --no-save
             mkdir -p $out
-            cp -r dist package.json $out/
+            cp -r dist package.json server.js $out/
+            cp -r node_modules $out/node_modules
+            runHook postInstall
           '';
         };
 
@@ -108,10 +140,8 @@
             export HERDR_LAUNCHER="${./default/herdr/herdr-launch.sh}"
             export TUICR_CONFIG="${./default/tuicr/config.toml}"
             export MERGE_SCRIPT="${./merge-jsonc.js}"
-            export GITNEXUS_DIR="${./gitnexus}"
-            export MEMORY_DIR="${./memory}"
             export DEFAULT_FEATURES="${defaultFeatures}"
-            export OMNIROUTE_AUTH_PLUGIN="${omnirouteAuthPlugin}"
+            export OMNIROUTE_PLUGIN_V2="${omniroutePluginV2}"
           ''
           + builtins.readFile ./sandbox.sh;
         };
@@ -121,20 +151,11 @@
         packages = lightShellInputs;
         defaultFeatures = "";
       };
-
-      sandbox-full = makeSandbox {
-        name = "sandbox";
-        packages = fullShellInputs;
-        defaultFeatures = "gitnexus";
-      };
     in
     {
       devShells.${system} = {
         default = pkgs.mkShell {
           buildInputs = lightShellInputs;
-        };
-        full = pkgs.mkShell {
-          buildInputs = fullShellInputs;
         };
       };
       apps.${system} = {
@@ -142,10 +163,10 @@
           type = "app";
           program = "${sandbox-light}/bin/sandbox";
         };
-        full = {
-          type = "app";
-          program = "${sandbox-full}/bin/sandbox";
-        };
+      };
+      packages.${system} = {
+        default = sandbox-light;
+        omniroute-plugin-v2 = omniroutePluginV2;
       };
       formatter.${system} = pkgs.writeShellApplication {
         name = "nixfmt-wrapper";

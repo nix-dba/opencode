@@ -1,28 +1,20 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "autoupdate": true,
-  "plugin": ["${OPENCODE_OMNIROUTE_AUTH}"],
-  "permission": {
-    "edit": {
-      "/tmp/*": "allow"
-    },
-    "read": {
-      "*": "allow"
-    },
-    "glob": {
-      "*": "allow"
-    },
-    "grep": {
-      "*": "allow"
-    },
-    "external_directory": {
-      "**/.opencode/**": "allow",
-      "*": "allow"
-    }
+  "update": "disable",
+  "compaction": {
+    "auto": false
   },
-  "instructions": [
-    "~/.config/opencode/prompts/general.md",
-    "~/.config/opencode/prompts/karpathy.md"
+  "plugins": [
+    {
+      "package": "${OMNIROUTE_PLUGIN_V2}",
+      "options": {}
+    }
+  ],
+  "permissions": [
+    { "action": "edit", "resource": "/tmp/*", "effect": "allow" },
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "glob", "resource": "*", "effect": "allow" },
+    { "action": "grep", "resource": "*", "effect": "allow" },
+    { "action": "external_directory", "resource": "*", "effect": "allow" }
   ]
 }
-

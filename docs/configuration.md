@@ -2,14 +2,26 @@
 
 ## opencode.jsonc
 
-File: `default/opencode.jsonc`
+File: `default/opencode.jsonc` (native opencode2 shape)
 
-General opencode configuration:
-- **autoupdate**: `true` -- auto-update opencode
-- **plugin**: `opencode-omniroute-auth@v1.1.4` -- authentication plugin for omniroute
-- **mcp.gitnexus**: Local MCP server running `gitnexus mcp`
-- **permission.external_directory**: Allows access to `**/.opencode/**` and `**/.gitnexus/**`
-- **instructions**: Loads three prompt files: `general.md`, `gitnexus.md`, `karpathy.md`
+General opencode2 configuration:
+- **update**: `"disable"` -- updates are managed by Nix
+- **plugins**: the official OmniRoute v2 plugin, referenced by its Nix store path via the `${OMNIROUTE_PLUGIN_V2}` placeholder (substituted by `sandbox.sh`, and removed automatically when no gateway is reachable)
+- **permissions**: ordered rule array (last match wins) allowing `/tmp` edits, reads, globs, greps, and external directories
+
+Instructions are no longer listed in `opencode.jsonc`. opencode2 loads them from `AGENTS.md`, which `sandbox.sh` generates by concatenating the bundled prompt files (`general.md`, `karpathy.md`).
+
+### OmniRoute plugin configuration
+
+The plugin requires a gateway `baseURL`. `sandbox.sh` resolves it in this order:
+
+1. `OMNIROUTE_BASE_URL` environment variable -- always wins when set (used even if unreachable)
+2. `~/.config/opencode/omniroute.json` -- a JSON object merged into the plugin `options`; its `baseURL` (e.g. `{"baseURL": "https://omni-route.example/v1", "managementReadToken": "..."}`) is used next
+3. Default `https://omni-route.k8s.lan/v1` -- used only when a `curl` probe confirms the gateway is reachable
+
+If no gateway is available, or when `--no-net` is set, the OmniRoute plugin entry is removed from the generated config so it never loads with an empty catalog. A one-line status is printed to stderr (`OmniRoute gateway: ...` or `OmniRoute gateway unavailable; disabling the OmniRoute plugin.`).
+
+Credentials are resolved by the plugin from `OMNIROUTE_API_KEY` / `OMNIROUTE_MANAGEMENT_API_KEY`, or from the credential stored via opencode's own integration auth flow.
 
 ## Herdr Configuration
 
@@ -18,7 +30,7 @@ Files:
 - `default/herdr/herdr-launch.sh` -- default sandbox command
 
 The launcher starts a headless Herdr server, creates a workspace for the current
-directory, auto-launches `opencode` in its root pane, then attaches the client.
+directory, auto-launches `opencode2` in its root pane, then attaches the client.
 `config.toml` disables onboarding and background update checks, and sets the
 default shell to `bash`.
 
@@ -38,13 +50,16 @@ Code review TUI settings:
 File: `flake.nix`
 
 Flake outputs:
-- `devShells.default` -- shell with all dependencies (bash, bubblewrap, bun, opencode, gitnexus, tuicr, herdr, jq, git, wl-clipboard, uv)
-- `apps.default` -- runs `sandbox` script
+- `devShells.default` -- shell with all dependencies (bash, bubblewrap, bun, opencode2, tuicr, herdr, jq, git, gitui, wl-clipboard, uv)
+- `apps.default` -- run the `sandbox` script
+- `packages.default` -- the built sandbox wrapper
+- `packages.omniroute-plugin-v2` -- the built OmniRoute opencode v2 plugin
 - `formatter.default` -- `nixfmt` wrapper (formats all `*.nix` files or specified paths)
 
 Flake inputs:
 - `nixpkgs` (nixpkgs-unstable)
-- `llm-agents.nix` (provides opencode, gitnexus, tuicr packages)
+- `llm-agents.nix` (provides opencode2, tuicr, herdr packages)
+- `omniroute-src` (pinned `diegosouzapw/OmniRoute` checkout, source for the v2 plugin)
 
 Extra substituter: `https://cache.numtide.com`
 
@@ -55,17 +70,17 @@ Example `~/.config/opencode/opencode.json` for a llama.cpp endpoint:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {
+  "providers": {
     "llama.cpp": {
       "name": "llama-server",
-      "npm": "@ai-sdk/openai-compatible",
-      "options": {
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "settings": {
         "baseURL": "https://llama-cpp.k8s.lan/v1"
       },
       "models": {
         "Qwen3.5-27B-Q3-KV8": {
           "name": "Qwen3.5-27B-Q3-KV8",
-          "modalities": {
+          "capabilities": {
             "input": ["text"],
             "output": ["text"]
           },
@@ -76,7 +91,7 @@ Example `~/.config/opencode/opencode.json` for a llama.cpp endpoint:
         },
         "Gemma4-31B-Q3-KV8": {
           "name": "Gemma4-31B-Q3-KV8",
-          "modalities": {
+          "capabilities": {
             "input": ["text"],
             "output": ["text"]
           },
@@ -91,30 +106,12 @@ Example `~/.config/opencode/opencode.json` for a llama.cpp endpoint:
 }
 ```
 
-When integrated with omni-route:
+When integrated with omni-route, the provider catalog is published by the plugin (see [OmniRoute plugin configuration](#omniroute-plugin-configuration)). A host `~/.config/opencode/omniroute.json` supplies the gateway settings:
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "omniroute": {
-      "options": {
-        "baseURL": "https://omni-route.k8s.lan/v1",
-        "apiMode": "chat",
-        "refreshOnList": true,
-        "modelCacheTtl": 300000,
-        "modelMetadata": {
-          "gpu/Qwen3.6-35B-A3B-Q4-KV8": {
-            "contextWindow": 262144
-          },
-          "gpu/Qwen3.6-27B-Q4-KV8-MTP": {
-            "contextWindow": 170000
-          }
-        }
-      }
-    }
-  },
-  "plugin": ["opencode-omniroute-auth"]
+  "baseURL": "https://omni-route.k8s.lan/v1",
+  "providerId": "omniroute"
 }
 ```
 

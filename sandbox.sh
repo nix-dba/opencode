@@ -2,7 +2,6 @@
 
 # Defaults
 SHOW_HELP=false
-EXPERIMENTAL_ARGS=()
 NET_ARGS=(--share-net)
 DO_VERBOSE=false
 NO_GIT_INIT=false
@@ -17,29 +16,12 @@ RO_BINDS=()
 # Parse CLI flags before any side effects
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --experimental-plan-mode)
-      EXPERIMENTAL_ARGS=(--setenv OPENCODE_EXPERIMENTAL "1" --setenv OPENCODE_EXPERIMENTAL_PLAN_MODE "1")
-      shift
-      ;;
     -h|--help)
       SHOW_HELP=true
       shift
       ;;
     --no-git-init)
       NO_GIT_INIT=true
-      shift
-      ;;
-    --with-gitnexus)
-      if ! command -v gitnexus >/dev/null 2>&1; then
-        echo "Error: gitnexus is not available in the light app." >&2
-        echo "Use 'nix run .#full' to get a sandbox with GitNexus support." >&2
-        exit 1
-      fi
-      WITH_FEATURES+=("gitnexus")
-      shift
-      ;;
-    --with-memory)
-      WITH_FEATURES+=("memory")
       shift
       ;;
     --bind-serial-dev)
@@ -94,34 +76,29 @@ if [ "$SHOW_HELP" = true ]; then
   cat <<EOF
 Usage: sandbox.sh [OPTIONS] [COMMAND] [ARGS...]
 
-Run opencode inside a bubblewrap sandbox.
+Run opencode2 inside a bubblewrap sandbox.
 
 Options:
   -h, --help                Show this help message
-  --experimental-plan-mode  Enable experimental plan mode
   --no-git-init             Skip git repository initialization prompt
-  --with-gitnexus           Include GitNexus code analysis tools (skills, MCP, prompts)
-                            Only available in the 'full' app: run via 'nix run .#full'
-  --with-memory             Include simple-memory plugin (context/memory features)
   --verbose, -v             Print the full bwrap command before execution
   --ssh-keys                Mount ~/.ssh read-only in the sandbox
   --hide-secrets            Hide 'secrets'/'secret' directories (they are visible by default)
   --no-net                  Disable network access in the sandbox
   --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
-  --no-sandbox              Run opencode directly without bubblewrap; configs are
+  --no-sandbox              Run opencode2 directly without bubblewrap; configs are
                             mirrored into a temporary XDG_CONFIG_HOME
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
 
 Apps:
-  nix run .                Light app (default) - no GitNexus, bare minimum dependencies
-  nix run .#full           Full app - all dependencies including GitNexus (enabled by default)
+  nix run .                Sandbox app (bare minimum dependencies)
 
-If no COMMAND is given, defaults to a herdr session auto-launching opencode.
+If no COMMAND is given, defaults to a herdr session auto-launching opencode2.
 EOF
   exit 0
 fi
 
-# Seed default features (set per app by the Nix flake: 'full' enables gitnexus by default)
+# Seed default features (set per app by the Nix flake)
 if [ -n "$DEFAULT_FEATURES" ]; then
   for feature in $DEFAULT_FEATURES; do
     if ! printf '%s\n' "${WITH_FEATURES[@]}" | grep -qx "$feature"; then
@@ -132,10 +109,10 @@ fi
 
 if [ "$NO_SANDBOX" != true ]; then
   mkdir -p "$HOME/.config/opencode"
-  mkdir -p "$HOME/.config/opencode/command"
+  mkdir -p "$HOME/.config/opencode/commands"
   mkdir -p "$HOME/.config/tuicr"
   mkdir -p "$HOME/.config/opencode/prompts"
-  mkdir -p "$HOME/.config/opencode/skill"
+  mkdir -p "$HOME/.config/opencode/skills"
   mkdir -p "$HOME/.opencode"
   mkdir -p "$HOME/.local/share/opencode"
   mkdir -p "$HOME/.local/state/opencode"
@@ -160,7 +137,12 @@ if [ "$NO_SANDBOX" = true ]; then
   CFG_BASE="$XDG_CFG/opencode"
   mkdir -p "$CFG_BASE" "$XDG_CFG/herdr" "$XDG_CFG/tuicr" "$XDG_STATE"
   CLEANUP_FILES+=("$CFG_TMP")
-  [ -d "$HOME/.config" ] && cp -r "$HOME/.config/." "$XDG_CFG/"
+  if [ -d "$HOME/.config" ]; then
+    cp -r "$HOME/.config/." "$XDG_CFG/" 2>/dev/null || true
+    # The host config may contain read-only entries (e.g. leftover nix-store
+    # permissions); make the mirrored tree writable so overlays can replace them.
+    chmod -R u+w "$XDG_CFG" 2>/dev/null || true
+  fi
 fi
 
 # Install a config artifact: read-only bind in sandbox mode, copy into the temp tree otherwise
@@ -168,7 +150,11 @@ install_ro() {
   local src="$1" dst="$2"
   if [ "$NO_SANDBOX" = true ]; then
     mkdir -p "$(dirname "$dst")"
+    rm -rf "$dst"
     cp -r "$src" "$dst"
+    # Bundled artifacts come from the read-only nix store; make copies writable
+    # so later overlays and temp-tree cleanup can operate on them.
+    chmod -R u+w "$dst" 2>/dev/null || true
   else
     RO_BINDS+=(--ro-bind-try "$src" "$dst")
   fi
@@ -253,16 +239,7 @@ if [ -n "$SKILL_DIR" ] && [ -d "$SKILL_DIR" ]; then
   for skill_path in "$SKILL_DIR"/*; do
     [ -d "$skill_path" ] || continue
     skill_name=$(basename "$skill_path")
-    install_ro "$skill_path" "$CFG_BASE/skill/$skill_name"
-  done
-fi
-
-# Prompt config artifacts (individual .md files)
-if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
-  for prompt_file in "$PROMPTS_DIR"/*.md; do
-    [ -f "$prompt_file" ] || continue
-    prompt_name=$(basename "$prompt_file")
-    install_ro "$prompt_file" "$CFG_BASE/prompts/$prompt_name"
+    install_ro "$skill_path" "$CFG_BASE/skills/$skill_name"
   done
 fi
 
@@ -271,12 +248,11 @@ if [ -n "$COMMANDS_DIR" ] && [ -d "$COMMANDS_DIR" ]; then
   for cmd_file in "$COMMANDS_DIR"/*.md; do
     [ -f "$cmd_file" ] || continue
     cmd_name=$(basename "$cmd_file")
-    install_ro "$cmd_file" "$CFG_BASE/command/$cmd_name"
+    install_ro "$cmd_file" "$CFG_BASE/commands/$cmd_name"
   done
 fi
 
 # Feature setup (per --with-<name> flags) — appended after default artifacts so features win
-GITNEXUS_BIND=()
 for feature in "${WITH_FEATURES[@]}"; do
   feature_dir_var="${feature^^}_DIR"
   feature_dir="${!feature_dir_var}"
@@ -286,41 +262,39 @@ for feature in "${WITH_FEATURES[@]}"; do
   if [ -d "$feature_dir/skill" ]; then
     for skill_path in "$feature_dir/skill"/*; do
       [ -d "$skill_path" ] || continue
-      install_ro "$skill_path" "$CFG_BASE/skill/$(basename "$skill_path")"
+      install_ro "$skill_path" "$CFG_BASE/skills/$(basename "$skill_path")"
     done
   fi
-
-  # Prompts
-  if [ -d "$feature_dir/prompts" ]; then
-    for prompt_file in "$feature_dir/prompts"/*.md; do
-      [ -f "$prompt_file" ] || continue
-      install_ro "$prompt_file" "$CFG_BASE/prompts/$(basename "$prompt_file")"
-    done
-  fi
-
-  # Feature-specific setup
-  case "$feature" in
-    gitnexus)
-      command -v gitnexus >/dev/null 2>&1 || {
-        echo "Warning: gitnexus feature enabled but binary not available; skipping setup." >&2
-        continue
-      }
-      mkdir -p "$HOME/.gitnexus"
-      GITNEXUS_BIND=(--bind-try "$HOME/.gitnexus" "$HOME/.gitnexus")
-      if [ ! -d .gitnexus ] && [ -t 0 ]; then
-        read -r -p "$PWD is not analysed via gitnexus. Analyse now? (y/N): " answer
-        case "$answer" in
-          [YyjJ]* )
-            gitnexus analyze --index-only
-            ;;
-          * )
-            echo "Skipped gitnexus analyze"
-            ;;
-        esac
-      fi
-      ;;
-  esac
 done
+
+# AGENTS.md: opencode2 loads instructions from AGENTS.md, not from the
+# `instructions` config field (accepted but not resolved in V2). Concatenate
+# the bundled base prompts with any enabled feature prompts, in order, into a
+# single global AGENTS.md.
+AGENTS_PARTS=()
+if [ -n "$PROMPTS_DIR" ] && [ -d "$PROMPTS_DIR" ]; then
+  for prompt_file in "$PROMPTS_DIR"/*.md; do
+    [ -f "$prompt_file" ] && AGENTS_PARTS+=("$prompt_file")
+  done
+fi
+for feature in "${WITH_FEATURES[@]}"; do
+  feature_dir_var="${feature^^}_DIR"
+  feature_dir="${!feature_dir_var}"
+  [ -d "$feature_dir/prompts" ] || continue
+  for prompt_file in "$feature_dir/prompts"/*.md; do
+    [ -f "$prompt_file" ] && AGENTS_PARTS+=("$prompt_file")
+  done
+done
+if [ "${#AGENTS_PARTS[@]}" -gt 0 ]; then
+  AGENTS_TMP=$(mktemp)
+  CLEANUP_FILES+=("$AGENTS_TMP")
+  : > "$AGENTS_TMP"
+  for prompt_file in "${AGENTS_PARTS[@]}"; do
+    cat "$prompt_file" >> "$AGENTS_TMP"
+    printf '\n' >> "$AGENTS_TMP"
+  done
+  install_ro "$AGENTS_TMP" "$CFG_BASE/AGENTS.md"
+fi
 
 # opencode.jsonc (merge overlays for each enabled feature)
 if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
@@ -343,9 +317,64 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
     jsonc_current="$merged_tmp"
   done
 
-  # Substitute ${OPENCODE_OMNIROUTE_AUTH} placeholder with the pre-built plugin path
-  if [ -n "$OMNIROUTE_AUTH_PLUGIN" ]; then
-    sed -i "s|\${OPENCODE_OMNIROUTE_AUTH}|file://$OMNIROUTE_AUTH_PLUGIN|" "$jsonc_current"
+  # OmniRoute gateway resolution (host first, then a reachable default):
+  #   1. OMNIROUTE_BASE_URL env (always wins when set)
+  #   2. ~/.config/opencode/omniroute.json `baseURL`
+  #   3. default https://omni-route.k8s.lan/v1, but only if it is reachable
+  # Host/env overrides are used even if unreachable; only the default is
+  # probed. Under --no-net the plugin is always disabled. When no gateway is
+  # available the plugin entry is removed so it never loads with an empty
+  # catalog. Credentials come from OMNIROUTE_API_KEY /
+  # OMNIROUTE_MANAGEMENT_API_KEY or the OpenCode integration credential.
+  if jq -e '.plugins' "$jsonc_current" >/dev/null 2>&1; then
+    omni_opts='{}'
+    omni_host_opts="$HOME/.config/opencode/omniroute.json"
+    if [ -f "$omni_host_opts" ]; then
+      omni_opts=$(jq -c '.' "$omni_host_opts" 2>/dev/null || echo '{}')
+    fi
+
+    omni_base=""
+    omni_source=""
+    if [ "${#NET_ARGS[@]}" -gt 0 ]; then
+      omni_base="${OMNIROUTE_BASE_URL:-}"
+      omni_source="OMNIROUTE_BASE_URL"
+      if [ -z "$omni_base" ]; then
+        omni_base=$(jq -r '.baseURL // empty' <<<"$omni_opts" 2>/dev/null || true)
+        omni_source="host config"
+      fi
+      if [ -z "$omni_base" ]; then
+        omni_default="https://omni-route.k8s.lan/v1"
+        if curl -k -s -o /dev/null --connect-timeout 3 --max-time 5 "$omni_default"; then
+          omni_base="$omni_default"
+          omni_source="default (reachable)"
+        fi
+      fi
+    fi
+
+    if [ -n "$omni_base" ]; then
+      echo "OmniRoute gateway: $omni_base ($omni_source)" >&2
+      omni_opts=$(jq -c --arg u "$omni_base" '. + {baseURL: $u}' <<<"$omni_opts")
+      omni_tmp=$(mktemp)
+      CLEANUP_FILES+=("$omni_tmp")
+      jq -c --argjson o "$omni_opts" \
+        '(.plugins[]? | select(.package == "${OMNIROUTE_PLUGIN_V2}") | .options) = $o' \
+        "$jsonc_current" > "$omni_tmp"
+      jsonc_current="$omni_tmp"
+    else
+      echo "OmniRoute gateway unavailable; disabling the OmniRoute plugin." >&2
+      omni_tmp=$(mktemp)
+      CLEANUP_FILES+=("$omni_tmp")
+      jq -c '
+        (.plugins // []) |= map(select(.package != "${OMNIROUTE_PLUGIN_V2}"))
+        | if (.plugins | length) == 0 then del(.plugins) else . end
+      ' "$jsonc_current" > "$omni_tmp"
+      jsonc_current="$omni_tmp"
+    fi
+  fi
+
+  # Substitute ${OMNIROUTE_PLUGIN_V2} placeholder with the pre-built plugin path
+  if [ -n "$OMNIROUTE_PLUGIN_V2" ]; then
+    sed -i "s|\${OMNIROUTE_PLUGIN_V2}|file://$OMNIROUTE_PLUGIN_V2|" "$jsonc_current"
   fi
 
   if [ "$NO_SANDBOX" = true ]; then
@@ -409,7 +438,7 @@ if [ "$NO_SANDBOX" = true ]; then
            -e "s|~/.config/opencode|$CFG_BASE|g" {} + 2>/dev/null || true
 fi
 
-# Default command: herdr session auto-launching opencode, or user override
+# Default command: herdr session auto-launching opencode2, or user override
 if [ $# -eq 0 ]; then
   if [ "$NO_SANDBOX" = true ]; then
     CMD=(bash "$CFG_TMP/herdr-launch.sh")
@@ -420,7 +449,7 @@ else
   CMD=("$@")
 fi
 
-# No-sandbox: run opencode directly with a temp XDG config/state home
+# No-sandbox: run opencode2 directly with a temp XDG config/state home
 if [ "$NO_SANDBOX" = true ]; then
   export XDG_CONFIG_HOME="$XDG_CFG"
   export XDG_STATE_HOME="$XDG_STATE"
@@ -428,17 +457,11 @@ if [ "$NO_SANDBOX" = true ]; then
   export HERDR_CONFIG_PATH="$XDG_CFG/herdr/config.toml"
   export HERDR_SOCKET_PATH="$XDG_CFG/herdr/herdr.sock"
   export TMPDIR=/tmp
-  export OPENCODE_DISABLE_AUTOCOMPACT=1
   export NODE_TLS_REJECT_UNAUTHORIZED=0
   export CARGO_NET_OFFLINE=false
   export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
   export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
   export GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
-
-  if [ "${#EXPERIMENTAL_ARGS[@]}" -gt 0 ]; then
-    export OPENCODE_EXPERIMENTAL=1
-    export OPENCODE_EXPERIMENTAL_PLAN_MODE=1
-  fi
 
   [ "${#NET_ARGS[@]}" -eq 0 ] && echo "Warning: --no-net cannot be enforced without the sandbox." >&2
   [ "$MOUNT_SSH" = true ] && echo "Warning: --ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
@@ -448,7 +471,7 @@ if [ "$NO_SANDBOX" = true ]; then
   fi
 
   if [ "$DO_VERBOSE" = true ]; then
-    echo "opencode (no sandbox):"
+    echo "opencode2 (no sandbox):"
     echo "  XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
     echo "  OPENCODE_CONFIG=$OPENCODE_CONFIG"
     echo "  HERDR_CONFIG_PATH=$HERDR_CONFIG_PATH"
@@ -520,7 +543,6 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.gitconfig" "$HOME/.gitconfig"
   --bind-try "$HOME/.cargo" "$HOME/.cargo"
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
-  "${GITNEXUS_BIND[@]}"
   "${SSH_BINDS[@]}"
   "${RO_BINDS[@]}"
   "${WORKSPACE_BINDS[@]}"
@@ -532,12 +554,10 @@ BWRAP_ARGS=(
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0
-  --setenv OPENCODE_DISABLE_AUTOCOMPACT 1
   --setenv CARGO_NET_OFFLINE false
   --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
   --setenv NIX_SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
   --setenv GIT_SSL_CAINFO /etc/ssl/certs/ca-certificates.crt
-  "${EXPERIMENTAL_ARGS[@]}"
   "${CMD[@]}"
 )
 

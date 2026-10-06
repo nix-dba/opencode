@@ -6,9 +6,8 @@
 
 - Answer directly when no tools are needed.
 - Use tools only when they materially improve correctness.
-- Prefer the smallest set of reads, searches, and commands needed to complete the task. Use gitnexus when available.
+- Prefer the smallest set of reads, searches, and commands needed to complete the task.
 - Escalate to planning only for non-trivial implementation work.
-- Prefer gitnexus to explore the codebase.
 
 ## Efficiency Rules
 

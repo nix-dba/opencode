@@ -1,6 +1,6 @@
 # Custom Commands
 
-Custom opencode commands are defined in `default/command/` as Markdown files.
+Custom opencode2 commands are defined in `default/command/` as Markdown files and installed under `~/.config/opencode/commands/`.
 
 ## `/commit`
 

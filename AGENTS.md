@@ -14,18 +14,18 @@ default/                   # base config — always included, no optional featur
 ├── herdr/                 # config.toml, herdr-launch.sh
 └── tuicr/
 
-gitnexus/                  # overlay for --with-gitnexus
+<feature>/                 # optional overlay for --with-<feature>
 ├── opencode.jsonc         # optional — only feature-specific additions
-├── prompts/               # gitnexus.md
-└── skill/                 # gitnexus-*/
+├── prompts/               # optional — concatenated into AGENTS.md
+└── skill/                 # optional — subdirectories bound into skills/
 ```
 
 ## How it works
 
 Each feature directory can contain any subset of:
 - `opencode.jsonc` — deep-merged into the base jsonc (objects merge recursively, arrays concatenate, scalars overlay)
-- `prompts/` — `.md` files bound into `$HOME/.config/opencode/prompts/`
-- `skill/` — subdirectories bound into `$HOME/.config/opencode/skill/`
+- `prompts/` — `.md` files concatenated into the global `$HOME/.config/opencode/AGENTS.md`
+- `skill/` — subdirectories bound into `$HOME/.config/opencode/skills/`
 
 The merge script at `merge-jsonc.js` handles JSONC comment stripping and deep-merge.
 
