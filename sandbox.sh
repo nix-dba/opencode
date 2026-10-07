@@ -176,14 +176,21 @@ if [ "$NO_SANDBOX" != true ]; then
   CLEANUP_FILES+=("$HERDR_CFG_TMPDIR" "$HERDR_STATE_TMPDIR")
   cp "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$HERDR_CFG_TMPDIR/config.toml"
 
-  # Per-sandbox opencode service config: pick a unique port so the sandbox's
-  # background service never collides with a host (or another sandbox) service
-  # on the shared network namespace. Instances inside the same sandbox still
-  # share it via the tmpfs state dir.
-  SERVICE_CFG_TMP=$(mktemp)
+  # Per-sandbox opencode config: mirror the host config into a writable temp
+  # dir and seed a unique service port so the sandbox's background service
+  # never collides with a host (or another sandbox) service on the shared
+  # network namespace. service.json must be a regular file here: opencode
+  # rewrites it atomically (tmp + rename), which fails with EBUSY when the
+  # file is a bind mount. Instances inside the same sandbox still share it.
+  OPCODE_CFG_TMPDIR=$(mktemp -d)
+  CLEANUP_FILES+=("$OPCODE_CFG_TMPDIR")
+  if [ -d "$HOME/.config/opencode" ]; then
+    cp -a "$HOME/.config/opencode/." "$OPCODE_CFG_TMPDIR/" 2>/dev/null || true
+    chmod -R u+w "$OPCODE_CFG_TMPDIR" 2>/dev/null || true
+  fi
   SERVICE_PORT=$(( 20000 + (RANDOM % 40000) ))
-  printf '{"port": %d}\n' "$SERVICE_PORT" > "$SERVICE_CFG_TMP"
-  CLEANUP_FILES+=("$SERVICE_CFG_TMP")
+  printf '{"port": %d}\n' "$SERVICE_PORT" > "$OPCODE_CFG_TMPDIR/service.json"
+  chmod 600 "$OPCODE_CFG_TMPDIR/service.json"
 fi
 
 # Git init with conditional prompt
@@ -543,7 +550,7 @@ BWRAP_ARGS=(
   --bind-try "$HOME/.cache/opencode" "$HOME/.cache/opencode"
   --bind-try "$HOME/.local/share/opencode" "$HOME/.local/share/opencode"
   --tmpfs "$HOME/.local/state/opencode"
-  --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode"
+  --bind "$OPCODE_CFG_TMPDIR" "$HOME/.config/opencode"
   --bind-try "$HOME/.opencode" "$HOME/.opencode"
   --tmpfs "$HOME/.config/tuicr"
   --ro-bind-try "${TUICR_CONFIG:-$SCRIPT_DIR/default/tuicr/config.toml}" "$HOME/.config/tuicr/config.toml"
@@ -559,7 +566,6 @@ BWRAP_ARGS=(
   --ro-bind-try "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$HOME/.herdr-launch.sh"
   --bind "$HERDR_CFG_TMPDIR" "$HOME/.config/herdr"
   --bind "$HERDR_STATE_TMPDIR" "$HOME/.local/state/herdr"
-  --bind "$SERVICE_CFG_TMP" "$HOME/.config/opencode/service.json"
   --setenv HERDR_CONFIG_PATH "$HOME/.config/herdr/config.toml"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
