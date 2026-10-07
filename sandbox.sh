@@ -175,6 +175,15 @@ if [ "$NO_SANDBOX" != true ]; then
   HERDR_STATE_TMPDIR=$(mktemp -d)
   CLEANUP_FILES+=("$HERDR_CFG_TMPDIR" "$HERDR_STATE_TMPDIR")
   cp "${HERDR_CONFIG:-$SCRIPT_DIR/default/herdr/config.toml}" "$HERDR_CFG_TMPDIR/config.toml"
+
+  # Per-sandbox opencode service config: pick a unique port so the sandbox's
+  # background service never collides with a host (or another sandbox) service
+  # on the shared network namespace. Instances inside the same sandbox still
+  # share it via the tmpfs state dir.
+  SERVICE_CFG_TMP=$(mktemp)
+  SERVICE_PORT=$(( 20000 + (RANDOM % 40000) ))
+  printf '{"port": %d}\n' "$SERVICE_PORT" > "$SERVICE_CFG_TMP"
+  CLEANUP_FILES+=("$SERVICE_CFG_TMP")
 fi
 
 # Git init with conditional prompt
@@ -550,6 +559,7 @@ BWRAP_ARGS=(
   --ro-bind-try "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$HOME/.herdr-launch.sh"
   --bind "$HERDR_CFG_TMPDIR" "$HOME/.config/herdr"
   --bind "$HERDR_STATE_TMPDIR" "$HOME/.local/state/herdr"
+  --bind "$SERVICE_CFG_TMP" "$HOME/.config/opencode/service.json"
   --setenv HERDR_CONFIG_PATH "$HOME/.config/herdr/config.toml"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
