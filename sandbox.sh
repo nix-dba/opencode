@@ -7,7 +7,7 @@ DO_VERBOSE=false
 NO_GIT_INIT=false
 WITH_FEATURES=()
 EXTRA_WORKSPACES=()
-MOUNT_SSH=false
+MOUNT_SSH=true
 KEEP_SECRETS=true
 BIND_SERIAL_DEV=false
 NO_SANDBOX=false
@@ -32,8 +32,8 @@ while [ "$#" -gt 0 ]; do
       DO_VERBOSE=true
       shift
       ;;
-    --ssh-keys)
-      MOUNT_SSH=true
+    --no-ssh-keys)
+      MOUNT_SSH=false
       shift
       ;;
     --hide-secrets)
@@ -82,7 +82,7 @@ Options:
   -h, --help                Show this help message
   --no-git-init             Skip git repository initialization prompt
   --verbose, -v             Print the full bwrap command before execution
-  --ssh-keys                Mount ~/.ssh read-only in the sandbox
+  --no-ssh-keys             Do not mount ~/.ssh in the sandbox (mounted read-only by default)
   --hide-secrets            Hide 'secrets'/'secret' directories (they are visible by default)
   --no-net                  Disable network access in the sandbox
   --bind-serial-dev           Bind host ttyUSB* and ttyACM* serial devices into the sandbox
@@ -473,7 +473,7 @@ if [ "$NO_SANDBOX" = true ]; then
   export GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
 
   [ "${#NET_ARGS[@]}" -eq 0 ] && echo "Warning: --no-net cannot be enforced without the sandbox." >&2
-  [ "$MOUNT_SSH" = true ] && echo "Warning: --ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
+  [ "$MOUNT_SSH" = false ] && echo "Warning: --no-ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
   [ "$BIND_SERIAL_DEV" = true ] && echo "Warning: --bind-serial-dev is a no-op without the sandbox (devices are already accessible)." >&2
   if [ "$KEEP_SECRETS" = false ]; then
     echo "Warning: --hide-secrets cannot be enforced without the sandbox: secrets/secret directories in workspaces are NOT hidden." >&2

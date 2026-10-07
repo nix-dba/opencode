@@ -28,7 +28,7 @@ Defined in `sandbox.sh`:
 |------|-------------|
 | `--no-git-init` | Skip git repository initialization prompt |
 | `--verbose`, `-v` | Print the full bwrap command before execution |
-| `--ssh-keys` | Mount `~/.ssh` read-only in the sandbox |
+| `--no-ssh-keys` | Do not mount `~/.ssh` in the sandbox (mounted read-only by default) |
 | `--hide-secrets` | Hide `secrets`/`secret` directories in workspaces (they are visible by default) |
 | `--no-net` | Disable network access in the sandbox |
 | `--no-sandbox` | Run opencode2 directly without bubblewrap. Configs are mirrored into a temporary `XDG_CONFIG_HOME` (see below) |
@@ -43,7 +43,7 @@ Defined in `sandbox.sh`:
 - If arguments are provided, they are passed directly as the sandbox command instead
 - Network binds (`docker.sock`, `resolv.conf`, `hosts`, `nsswitch.conf`) are conditional on `--no-net`
 - Wayland socket is auto-detected and mounted for GUI clipboard support
-- SSH keys are mounted only when `--ssh-keys` is passed
+- SSH keys are mounted read-only by default (a hardened temp copy); pass `--no-ssh-keys` to leave `~/.ssh` out of the sandbox
 - Skills and commands are mounted as read-only bind mounts under `~/.config/opencode/skills/` and `~/.config/opencode/commands/`, plus per-feature overlays for enabled `--with-*` flags
 - The bundled prompts plus any enabled feature prompts are concatenated into a single global `~/.config/opencode/AGENTS.md` (opencode2 loads instructions from `AGENTS.md`; the config `instructions` field is accepted but not resolved in V2)
 
@@ -71,7 +71,7 @@ Because everything lives in a temp dir, nothing persists after the session — s
 
 **Not enforceable without the sandbox** (warned on stderr):
 - `--no-net` cannot disable network access
-- `--ssh-keys` and `--bind-serial-dev` are no-ops (SSH keys and devices are already accessible)
+- `--no-ssh-keys` and `--bind-serial-dev` are no-ops (SSH keys and devices are already accessible)
 - `--hide-secrets` is a no-op (`secrets`/`secret` directories are not hidden)
 
 The config mirror only affects the session's environment (`XDG_CONFIG_HOME`/`XDG_STATE_HOME`); `HOME`-based files (`~/.gitconfig`, `~/.cargo`, etc.) behave exactly as on the host.

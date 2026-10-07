@@ -53,4 +53,4 @@ The flake provides one sandbox app:
 
 - **`nix run .`** -- Sandbox with bare minimum dependencies
 
-See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--no-net`, `--ssh-keys`, `--no-sandbox`, etc.).
+See [docs/sandbox.md](docs/sandbox.md) for available CLI flags (`--no-net`, `--no-ssh-keys`, `--no-sandbox`, etc.).
