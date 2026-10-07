@@ -533,7 +533,7 @@ BWRAP_ARGS=(
   # home bind mounts
   --bind-try "$HOME/.cache/opencode" "$HOME/.cache/opencode"
   --bind-try "$HOME/.local/share/opencode" "$HOME/.local/share/opencode"
-  --bind-try "$HOME/.local/state/opencode" "$HOME/.local/state/opencode"
+  --tmpfs "$HOME/.local/state/opencode"
   --bind-try "$HOME/.config/opencode" "$HOME/.config/opencode"
   --bind-try "$HOME/.opencode" "$HOME/.opencode"
   --tmpfs "$HOME/.config/tuicr"
