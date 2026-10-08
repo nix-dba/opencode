@@ -23,6 +23,21 @@ If no gateway is available, or when `--no-net` is set, the OmniRoute plugin entr
 
 Credentials are resolved by the plugin from `OMNIROUTE_API_KEY` / `OMNIROUTE_MANAGEMENT_API_KEY`, or from the credential stored via opencode's own integration auth flow.
 
+### Refreshing the model list
+
+The catalog is fetched once when the plugin is loaded. When models are added,
+reloaded, or removed on the gateway, refresh the list with:
+
+- the `/reload` slash command (command palette entry "Reload configuration"), or
+- `opencode2 reload` from a shell.
+
+The plugin caches the catalog for 5 minutes (`modelCacheTtlMs`, default
+`300000` ms) and persists it to `~/.local/share/opencode/plugins/omniroute-<providerId>.json`
+(or `$OPENCODE_DATA_DIR/plugins/…`). A reload within the cache window reuses the
+snapshot instead of hitting the gateway. To force a fresh fetch, delete the
+snapshot file before reloading, or lower `modelCacheTtlMs` in the plugin
+`options`.
+
 ## Herdr Configuration
 
 Files:
