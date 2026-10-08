@@ -6,22 +6,39 @@ File: `default/opencode.jsonc` (native opencode2 shape)
 
 General opencode2 configuration:
 - **update**: `"disable"` -- updates are managed by Nix
-- **plugins**: the official OmniRoute v2 plugin, referenced by its Nix store path via the `${OMNIROUTE_PLUGIN_V2}` placeholder (substituted by `sandbox.sh`, and removed automatically when no gateway is reachable)
+- **plugins**: the official OmniRoute v2 plugin, added by `sandbox.sh` only when the host provides `~/.config/opencode/omniroute.json`; it is referenced by its Nix store path via the `${OMNIROUTE_PLUGIN_V2}` placeholder (substituted by `sandbox.sh`)
 - **permissions**: ordered rule array (last match wins) allowing `/tmp` edits, reads, globs, greps, and external directories
 
 Instructions are no longer listed in `opencode.jsonc`. opencode2 loads them from `AGENTS.md`, which `sandbox.sh` generates by concatenating the bundled prompt files (`general.md`, `karpathy.md`).
 
 ### OmniRoute plugin configuration
 
-The plugin requires a gateway `baseURL`. `sandbox.sh` resolves it in this order:
+The plugin is opt-in. `sandbox.sh` adds it to the generated config only when a host `~/.config/opencode/omniroute.json` exists and contains a non-empty JSON object. That object is passed through as the plugin's `options`, so the host supplies the gateway settings. With no file, no OmniRoute plugin is added (there is no URL probing and no default gateway).
 
-1. `OMNIROUTE_BASE_URL` environment variable -- always wins when set (used even if unreachable)
-2. `~/.config/opencode/omniroute.json` -- a JSON object merged into the plugin `options`; its `baseURL` (e.g. `{"baseURL": "https://omni-route.example/v1", "managementReadToken": "..."}`) is used next
-3. Default `https://omni-route.k8s.lan/v1` -- used only when a `curl` probe confirms the gateway is reachable
+Example `~/.config/opencode/omniroute.json` (`baseURL` is required; omit the credential keys when you use the connected credential instead):
 
-If no gateway is available, or when `--no-net` is set, the OmniRoute plugin entry is removed from the generated config so it never loads with an empty catalog. A one-line status is printed to stderr (`OmniRoute gateway: ...` or `OmniRoute gateway unavailable; disabling the OmniRoute plugin.`).
+```json
+{
+  "baseURL": "https://omni-route.k8s.lan",
+  "providerId": "omniroute",
+  "apiKey": "sk-omniroute-…",
+  "managementReadToken": "…"
+}
+```
 
-Credentials are resolved by the plugin from `OMNIROUTE_API_KEY` / `OMNIROUTE_MANAGEMENT_API_KEY`, or from the credential stored via opencode's own integration auth flow.
+`baseURL` is the gateway root (no `/v1` suffix needed). See the plugin [README](https://github.com/diegosouzapw/OmniRoute/blob/v3.8.51/@omniroute/opencode-plugin-v2/README.md) for the full option list (`displayName`, `enrichment`, `usableOnly`, `visibleModels` / `hiddenModels`, `modelCacheTtlMs`, ...).
+
+#### Credentials
+
+The plugin needs a gateway key, resolved in this order:
+
+1. **Connected credential** (recommended) -- connect through opencode's auth flow (`opencode auth`, or the Connect action in the model picker). Nothing is written to `omniroute.json`.
+2. **`apiKey` in `~/.config/opencode/omniroute.json`** -- per-user override; the key ends up in a plaintext config file.
+3. **`OMNIROUTE_API_KEY`** environment variable.
+
+The gateway's `/api/*` endpoints (combos, provider health, enrichment) usually need a separate **management** token. Set `managementReadToken` in `omniroute.json` (or export `OMNIROUTE_MANAGEMENT_API_KEY`); when both are set the option wins. If unset, it falls back to `apiKey` with a startup warning.
+
+If none yields a key, the catalog is empty and the plugin logs it once at startup rather than leaving a silent empty model list.
 
 ### Refreshing the model list
 
@@ -121,14 +138,7 @@ Example `~/.config/opencode/opencode.json` for a llama.cpp endpoint:
 }
 ```
 
-When integrated with omni-route, the provider catalog is published by the plugin (see [OmniRoute plugin configuration](#omniroute-plugin-configuration)). A host `~/.config/opencode/omniroute.json` supplies the gateway settings:
-
-```json
-{
-  "baseURL": "https://omni-route.k8s.lan/v1",
-  "providerId": "omniroute"
-}
-```
+When integrated with omni-route, the provider catalog is published by the plugin (see [OmniRoute plugin configuration](#omniroute-plugin-configuration)). The host `~/.config/opencode/omniroute.json` supplies the gateway settings.
 
 ### LLaMa.cpp Server Config
 

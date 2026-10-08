@@ -371,59 +371,21 @@ if [ -n "$OPENCODE_JSONC" ] && [ -f "$OPENCODE_JSONC" ]; then
     jsonc_current="$merged_tmp"
   done
 
-  # OmniRoute gateway resolution (host first, then a reachable default):
-  #   1. OMNIROUTE_BASE_URL env (always wins when set)
-  #   2. ~/.config/opencode/omniroute.json `baseURL`
-  #   3. default https://omni-route.k8s.lan/v1, but only if it is reachable
-  # Host/env overrides are used even if unreachable; only the default is
-  # probed. Under --no-net the plugin is always disabled. When no gateway is
-  # available the plugin entry is removed so it never loads with an empty
-  # catalog. Credentials come from OMNIROUTE_API_KEY /
-  # OMNIROUTE_MANAGEMENT_API_KEY or the OpenCode integration credential.
-  if jq -e '.plugins' "$jsonc_current" >/dev/null 2>&1; then
-    omni_opts='{}'
-    omni_host_opts="$HOME/.config/opencode/omniroute.json"
-    if [ -f "$omni_host_opts" ]; then
-      omni_opts=$(jq -c '.' "$omni_host_opts" 2>/dev/null || echo '{}')
-    fi
-
-    omni_base=""
-    omni_source=""
-    if [ "${#NET_ARGS[@]}" -gt 0 ]; then
-      omni_base="${OMNIROUTE_BASE_URL:-}"
-      omni_source="OMNIROUTE_BASE_URL"
-      if [ -z "$omni_base" ]; then
-        omni_base=$(jq -r '.baseURL // empty' <<<"$omni_opts" 2>/dev/null || true)
-        omni_source="host config"
-      fi
-      if [ -z "$omni_base" ]; then
-        omni_default="https://omni-route.k8s.lan/v1"
-        if curl -k -s -o /dev/null --connect-timeout 3 --max-time 5 "$omni_default"; then
-          omni_base="$omni_default"
-          omni_source="default (reachable)"
-        fi
-      fi
-    fi
-
-    if [ -n "$omni_base" ]; then
-      echo "OmniRoute gateway: $omni_base ($omni_source)" >&2
-      omni_opts=$(jq -c --arg u "$omni_base" '. + {baseURL: $u}' <<<"$omni_opts")
-      omni_tmp=$(mktemp)
-      CLEANUP_FILES+=("$omni_tmp")
-      jq -c --argjson o "$omni_opts" \
-        '(.plugins[]? | select(.package == "${OMNIROUTE_PLUGIN_V2}") | .options) = $o' \
-        "$jsonc_current" > "$omni_tmp"
-      jsonc_current="$omni_tmp"
-    else
-      echo "OmniRoute gateway unavailable; disabling the OmniRoute plugin." >&2
-      omni_tmp=$(mktemp)
-      CLEANUP_FILES+=("$omni_tmp")
-      jq -c '
-        (.plugins // []) |= map(select(.package != "${OMNIROUTE_PLUGIN_V2}"))
-        | if (.plugins | length) == 0 then del(.plugins) else . end
-      ' "$jsonc_current" > "$omni_tmp"
-      jsonc_current="$omni_tmp"
-    fi
+  # OmniRoute plugin (opt-in): added only when the host provides
+  # ~/.config/opencode/omniroute.json. That file's JSON object is passed
+  # through as the plugin `options` (baseURL, providerId, credentials, ...).
+  # There is no URL probing and no default gateway: with no file, no plugin is
+  # added, so it never loads with an empty catalog.
+  omni_host_opts="$HOME/.config/opencode/omniroute.json"
+  if [ -n "$OMNIROUTE_PLUGIN_V2" ] && [ -f "$omni_host_opts" ] \
+     && omni_opts=$(jq -ec 'select(type == "object" and length > 0)' "$omni_host_opts" 2>/dev/null); then
+    echo "OmniRoute plugin enabled ($omni_host_opts)" >&2
+    omni_tmp=$(mktemp)
+    CLEANUP_FILES+=("$omni_tmp")
+    jq -c --argjson o "$omni_opts" \
+      '.plugins = ((.plugins // []) + [{"package": "${OMNIROUTE_PLUGIN_V2}", "options": $o}])' \
+      "$jsonc_current" > "$omni_tmp"
+    jsonc_current="$omni_tmp"
   fi
 
   # Substitute ${OMNIROUTE_PLUGIN_V2} placeholder with the pre-built plugin path

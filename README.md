@@ -15,7 +15,7 @@ Sandboxed opencode2 environment with code intelligence, running via Nix with Bub
 
 - **Bubblewrap sandbox** (`sandbox.sh`) -- Isolates opencode2 from the host filesystem to reduce secret exposure risk (opt out with `--no-sandbox` to run directly on the host)
 - **Herdr terminal workspace** -- Agent-native session that auto-launches opencode2
-- **OmniRoute plugin** -- Official opencode v2 plugin (`@omniroute/opencode-plugin-v2`), built from a pinned source checkout and configured from the host
+- **OmniRoute plugin** -- Official opencode v2 plugin (`@omniroute/opencode-plugin-v2`), built from a pinned source checkout and opt-in via a host `~/.config/opencode/omniroute.json`
 - **tuicr** -- TUI code review tool with vim keybindings, launched via `/tuicr` command in a Herdr tab
 - **Custom opencode2 commands** -- `/commit` (conventional commits), `/docs` (documentation generation), `/tuicr` (code review)
 - **Custom agent instructions** -- General guidelines and Karpathy-style coding rules concatenated into a global `AGENTS.md`

@@ -4,12 +4,6 @@
   "compaction": {
     "auto": false
   },
-  "plugins": [
-    {
-      "package": "${OMNIROUTE_PLUGIN_V2}",
-      "options": {}
-    }
-  ],
   "permissions": [
     { "action": "read", "resource": "*", "effect": "allow" },
     { "action": "external_directory", "resource": "*", "effect": "allow" }
