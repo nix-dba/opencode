@@ -39,6 +39,7 @@ Defined in `sandbox.sh`:
 - Creates necessary directories (`~/.config/opencode`, `~/.opencode`, etc.) before sandbox entry
 - If the current directory is not a git repo, prompts to initialize one
 - Uses an isolated Herdr config/state (temp directories) to avoid polluting host Herdr state
+- OpenCode state (`~/.local/state/opencode`) is a per-sandbox mirror: the selected model (`model.json`), prompt history, and TUI layout are seeded from the host and copied back on exit, so they survive restarts and are shared by every session in the sandbox. Runtime files (`service.json`, `locks/`) are not persisted
 - Default command is `herdr-launch.sh` which starts a Herdr session and auto-launches opencode2
 - If arguments are provided, they are passed directly as the sandbox command instead
 - Network binds (`docker.sock`, `resolv.conf`, `hosts`, `nsswitch.conf`) are conditional on `--no-net`

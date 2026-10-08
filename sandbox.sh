@@ -160,7 +160,28 @@ install_ro() {
   fi
 }
 
+# Copy user preferences out of the per-sandbox state mirror back to the host
+# before the temp dir is removed, so the selected model and prompt history
+# survive a restart. Runtime files (service.json, locks) are intentionally not
+# persisted.
+persist_state() {
+  [ "$NO_SANDBOX" != true ] || return 0
+  [ -n "${OPCODE_STATE_TMPDIR:-}" ] && [ -d "$OPCODE_STATE_TMPDIR" ] || return 0
+  local host_state="$HOME/.local/state/opencode"
+  mkdir -p "$host_state" 2>/dev/null || return 0
+  for entry in model.json prompt-history.jsonl; do
+    if [ -f "$OPCODE_STATE_TMPDIR/$entry" ]; then
+      cp -f "$OPCODE_STATE_TMPDIR/$entry" "$host_state/$entry" 2>/dev/null || true
+    fi
+  done
+  if [ -d "$OPCODE_STATE_TMPDIR/latest" ]; then
+    rm -rf "$host_state/latest" 2>/dev/null || true
+    cp -a "$OPCODE_STATE_TMPDIR/latest" "$host_state/latest" 2>/dev/null || true
+  fi
+}
+
 cleanup() {
+  persist_state
   rm -rf "${CLEANUP_FILES[@]}"
   if [ "$NO_SANDBOX" != true ]; then
     find "$HOME/.config/opencode" -mindepth 1 -type f -empty -delete 2>/dev/null
@@ -191,6 +212,23 @@ if [ "$NO_SANDBOX" != true ]; then
   SERVICE_PORT=$(( 20000 + (RANDOM % 40000) ))
   printf '{"port": %d}\n' "$SERVICE_PORT" > "$OPCODE_CFG_TMPDIR/service.json"
   chmod 600 "$OPCODE_CFG_TMPDIR/service.json"
+
+  # Per-sandbox opencode state: mirror user preferences (selected model, prompt
+  # history, TUI layout) into a writable temp dir so they survive restarts and
+  # are shared by every instance in this sandbox. Runtime files (service.json,
+  # locks) are not seeded: the authoritative service registration is the
+  # config/service.json seeded above, and a fresh lock set avoids stale locks.
+  # persist_state (in the cleanup trap) copies the preferences back to the host.
+  OPCODE_STATE_TMPDIR=$(mktemp -d)
+  CLEANUP_FILES+=("$OPCODE_STATE_TMPDIR")
+  for entry in model.json prompt-history.jsonl; do
+    if [ -f "$HOME/.local/state/opencode/$entry" ]; then
+      cp -f "$HOME/.local/state/opencode/$entry" "$OPCODE_STATE_TMPDIR/$entry"
+    fi
+  done
+  if [ -d "$HOME/.local/state/opencode/latest" ]; then
+    cp -a "$HOME/.local/state/opencode/latest" "$OPCODE_STATE_TMPDIR/latest"
+  fi
 fi
 
 # Git init with conditional prompt
@@ -549,7 +587,7 @@ BWRAP_ARGS=(
   # home bind mounts
   --bind-try "$HOME/.cache/opencode" "$HOME/.cache/opencode"
   --bind-try "$HOME/.local/share/opencode" "$HOME/.local/share/opencode"
-  --tmpfs "$HOME/.local/state/opencode"
+  --bind "$OPCODE_STATE_TMPDIR" "$HOME/.local/state/opencode"
   --bind "$OPCODE_CFG_TMPDIR" "$HOME/.config/opencode"
   --bind-try "$HOME/.opencode" "$HOME/.opencode"
   --tmpfs "$HOME/.config/tuicr"
