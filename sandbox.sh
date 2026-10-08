@@ -411,7 +411,7 @@ if [ "$MOUNT_SSH" = true ] && [ -d "$HOME/.ssh" ]; then
   find "$SSH_TMPDIR" -type f -name '*.pub' -exec chmod 644 {} +
   SSH_BINDS+=(--ro-bind-try "$SSH_TMPDIR" "$HOME/.ssh")
 fi
-if [ "$MOUNT_SSH" = true ] && [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+if [ "$MOUNT_SSH" = true ] && [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "${SSH_AUTH_SOCK:-}" ]; then
   SSH_BINDS+=(--bind-try "$SSH_AUTH_SOCK" "$SSH_AUTH_SOCK")
   SSH_BINDS+=(--setenv SSH_AUTH_SOCK "$SSH_AUTH_SOCK")
 fi
