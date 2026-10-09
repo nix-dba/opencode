@@ -46,6 +46,8 @@ Defined in `sandbox.sh`:
 - Wayland socket is auto-detected and mounted for GUI clipboard support
 - SSH keys are mounted read-only by default (a hardened temp copy); pass `--no-ssh-keys` to leave `~/.ssh` out of the sandbox
 - Skills and commands are mounted as read-only bind mounts under `~/.config/opencode/skills/` and `~/.config/opencode/commands/`, plus per-feature overlays for enabled `--with-*` flags
+- Workspace binds (`$PWD` and `-w` paths) are applied **before** all sandbox-internal mounts, so running from a parent of the config/state paths (e.g. `~` or `~/.config/opencode`) cannot shadow the prepared environment
+- A workspace that contains a protected system mount root (`/`, `/usr`, `/bin`, `/lib`, `/lib64`, `/sbin`, `/nix`, `/etc`, `/proc`, `/sys`, `/dev`, `/run`) is rejected with an error, since such a bind would shadow the sandbox's system mounts
 - The bundled prompts plus any enabled feature prompts are concatenated into a single global `~/.config/opencode/AGENTS.md` (opencode2 loads instructions from `AGENTS.md`; the config `instructions` field is accepted but not resolved in V2)
 
 ## Sandbox Bind Mounts
@@ -57,6 +59,8 @@ The sandbox mounts:
 - User config: `~/.config/opencode` (read-write), `~/.config/tuicr` (tmpfs), `~/.config/git`, `~/.config/nix`
 - User data: `~/.cache/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`
 - Herdr: isolated temp config and state directories
+
+Mounts are applied in order and a later bind on an ancestor path shadows earlier child mounts. Workspace binds are therefore applied before the internal home/config/state mounts, which guarantees the sandbox's prepared environment wins. Workspaces that contain a protected system mount root are rejected (see [Behavior](#behavior)).
 
 ## No-sandbox Mode (`--no-sandbox`)
 

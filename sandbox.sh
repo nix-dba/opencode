@@ -259,6 +259,29 @@ for ws in "${WORKSPACES[@]}"; do
   fi
 done
 
+# Guard: a workspace must not contain a protected system mount root. Such a bind
+# would shadow the sandbox's own system mounts (bwrap applies mounts in order,
+# and a later bind on an ancestor hides earlier child mounts). Workspaces that
+# are ancestors of the sandbox's home/config/state paths are fine: those mounts
+# are applied after the workspace binds and therefore win.
+if [ "$NO_SANDBOX" != true ]; then
+  PROTECTED_ROOTS=(/ /usr /bin /lib /lib64 /sbin /nix /etc /proc /sys /dev /run)
+  for ws in "${WORKSPACES[@]}"; do
+    [ -d "$ws" ] || continue
+    ws_abs=$(cd "$ws" && pwd -P)
+    for root in "${PROTECTED_ROOTS[@]}"; do
+      case "$root" in
+        "$ws_abs" | "$ws_abs"/*)
+          echo "Error: workspace '$ws' contains the protected sandbox mount point '$root'." >&2
+          echo "Such a bind would shadow the sandbox's system mounts." >&2
+          echo "Run from a project subdirectory (or pass -w <subdir>) instead." >&2
+          exit 1
+          ;;
+      esac
+    done
+  done
+fi
+
 # Secrets directory shadowing (opt-in via --hide-secrets)
 SECRETS_SHADOW=()
 if [ "$KEEP_SECRETS" = false ]; then
@@ -546,6 +569,10 @@ BWRAP_ARGS=(
   --dir "${XDG_RUNTIME_DIR:-/run/user/$UID}"
   --setenv HOME "$HOME"
   --chdir "$PWD"
+  # Workspace binds come first: every sandbox-internal mount below is applied
+  # afterwards, so a workspace that is a parent of a config/state/ssh path
+  # cannot shadow the prepared environment.
+  "${WORKSPACE_BINDS[@]}"
   # home bind mounts
   --bind-try "$HOME/.cache/opencode" "$HOME/.cache/opencode"
   --bind-try "$HOME/.local/share/opencode" "$HOME/.local/share/opencode"
@@ -561,7 +588,6 @@ BWRAP_ARGS=(
   --ro-bind-try "$HOME/.local/share/fonts" "$HOME/.local/share/fonts"
   "${SSH_BINDS[@]}"
   "${RO_BINDS[@]}"
-  "${WORKSPACE_BINDS[@]}"
   "${SECRETS_SHADOW[@]}"
   --ro-bind-try "${HERDR_LAUNCHER:-$SCRIPT_DIR/default/herdr/herdr-launch.sh}" "$HOME/.herdr-launch.sh"
   --bind "$HERDR_CFG_TMPDIR" "$HOME/.config/herdr"
