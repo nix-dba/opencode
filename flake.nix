@@ -143,6 +143,7 @@
             export OPENCODE_JSONC="${./default/opencode.jsonc}"
             export HERDR_CONFIG="${./default/herdr/config.toml}"
             export HERDR_LAUNCHER="${./default/herdr/herdr-launch.sh}"
+            export CLAUDE_STATUSLINE="${./default/claude/statusline.sh}"
             export TUICR_CONFIG="${./default/tuicr/config.toml}"
             export MERGE_SCRIPT="${./merge-jsonc.js}"
             export DEFAULT_FEATURES="${defaultFeatures}"

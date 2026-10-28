@@ -134,6 +134,67 @@ fi
 # Script location for referencing bundled configs
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Deploy the bundled Claude Code status line to the host so plan usage is
+# visible in every Claude pane. Idempotent: only writes on change, backs up the
+# settings file, and never replaces a statusLine owned by something else.
+deploy_claude_statusline() {
+  local src="${CLAUDE_STATUSLINE:-$SCRIPT_DIR/default/claude/statusline.sh}"
+  local dst="$HOME/.claude/statusline.sh"
+  local cfg="$HOME/.claude/settings.json"
+  # Literal ~ so the path stays home-relative inside Claude's settings.json.
+  # shellcheck disable=SC2088
+  local target='~/.claude/statusline.sh'
+  local current
+
+  [ -f "$src" ] || return 0
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "warning: jq not found, skipping Claude status line deployment" >&2
+    return 0
+  fi
+
+  mkdir -p "$HOME/.claude" || return 0
+  if [ -L "$cfg" ]; then
+    cfg=$(readlink -f "$cfg") || return 0
+  fi
+
+  if ! cmp -s "$src" "$dst" 2>/dev/null; then
+    install -m 755 "$src" "$dst" || {
+      echo "warning: could not write $dst" >&2
+      return 0
+    }
+  fi
+
+  [ -f "$cfg" ] || printf '{}\n' > "$cfg"
+
+  current=$(jq -r '.statusLine | if type == "object" then (.command // "") else "" end' "$cfg" 2>/dev/null) || return 0
+  if [ -n "$current" ] && [ "$current" != "$target" ] && [ "$current" != "$dst" ]; then
+    echo "warning: $cfg has a custom statusLine ($current); leaving it untouched" >&2
+    return 0
+  fi
+
+  if [ "$current" = "$target" ] \
+    && [ "$(jq -r '.statusLine.type // ""' "$cfg")" = "command" ] \
+    && [ "$(jq -r '.statusLine.refreshInterval // ""' "$cfg")" = "30" ]; then
+    return 0
+  fi
+
+  local backup tmp
+  backup="$cfg.bak.$(date +%Y%m%d%H%M%S)"
+  cp -p "$cfg" "$backup" || return 0
+  tmp=$(mktemp "$cfg.XXXXXX") || return 0
+  if jq --arg cmd "$target" \
+      '.statusLine = {type: "command", command: $cmd, refreshInterval: 30}' "$cfg" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null 2>&1; then
+    chmod --reference="$cfg" "$tmp" 2>/dev/null || chmod 644 "$tmp"
+    mv "$tmp" "$cfg"
+    echo "Claude status line: installed in $cfg (backup: $backup)"
+  else
+    rm -f "$tmp"
+    echo "warning: could not update $cfg" >&2
+  fi
+}
+deploy_claude_statusline
+
 CLEANUP_FILES=()
 
 # No-sandbox mode: mirror host ~/.config into a temp XDG home and overlay the bundle
