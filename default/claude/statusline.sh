@@ -4,7 +4,7 @@
 set -u
 export LC_NUMERIC=C
 
-IFS=$'\t' read -r model ctx cost five five_reset week week_reset < <(
+IFS='|' read -r model ctx cost five five_reset week week_reset < <(
   jq -r '[
     (.model.display_name // "Claude"),
     (.context_window.used_percentage // ""),
@@ -13,7 +13,7 @@ IFS=$'\t' read -r model ctx cost five five_reset week week_reset < <(
     (.rate_limits.five_hour.resets_at // ""),
     (.rate_limits.seven_day.used_percentage // ""),
     (.rate_limits.seven_day.resets_at // "")
-  ] | @tsv'
+  ] | map(tostring) | join("|")'
 )
 
 dim=$'\033[2m'; green=$'\033[32m'; yellow=$'\033[33m'; red=$'\033[31m'; reset=$'\033[0m'
