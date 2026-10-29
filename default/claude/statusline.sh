@@ -4,6 +4,38 @@
 set -u
 export LC_NUMERIC=C
 
+# Reset times should read as wall-clock time, but this sandbox has neither
+# /etc/localtime nor zoneinfo on the default search path, so `date` would print
+# UTC. Resolve a zone (STATUSLINE_TZ > system config > locale) and point glibc at
+# Nix's tzdata when the system has none. Unresolvable zones leave UTC untouched.
+setup_timezone() {
+  local z=${STATUSLINE_TZ:-} d
+  if [ -z "$z" ] && [ -f /etc/timezone ]; then read -r z < /etc/timezone; fi
+  if [ -z "$z" ] || [ "$z" = UTC ]; then
+    z=$(timedatectl show -p Timezone --value 2>/dev/null)
+    [ "$z" = UTC ] && z=
+  fi
+  if [ -z "$z" ]; then
+    case "${LC_ALL:-${LC_TIME:-${LANG:-}}}" in
+      de_AT_*) z=Europe/Vienna ;;
+      de_CH_*) z=Europe/Zurich ;;
+      de_*)    z=Europe/Berlin ;;
+      en_GB_*) z=Europe/London ;;
+      fr_*)    z=Europe/Paris ;;
+      *)       return 0 ;;
+    esac
+  fi
+  if [ ! -e "/usr/share/zoneinfo/$z" ] && [ ! -e "/etc/zoneinfo/$z" ]; then
+    for d in $(ls -d /nix/store/*tzdata-*/share/zoneinfo 2>/dev/null | sort -Vr); do
+      if [ -e "$d/$z" ]; then export TZDIR=$d; break; fi
+    done
+  fi
+  TZ=$z
+  export TZ
+}
+
+[ -z "${TZ:-}" ] && setup_timezone
+
 IFS='|' read -r model ctx cost five five_reset week week_reset < <(
   jq -r '[
     (.model.display_name // "Claude"),
