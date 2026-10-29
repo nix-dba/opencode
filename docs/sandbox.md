@@ -66,15 +66,15 @@ Mounts are applied in order and a later bind on an ancestor path shadows earlier
 
 ## No-sandbox Mode (`--no-sandbox`)
 
-Runs opencode2 on the host directly (no bubblewrap) while still applying all bundled configs (skills, commands, generated `AGENTS.md`, merged `opencode.jsonc`, herdr and tuicr configs) **without writing anything to the host**:
+Runs opencode2 on the host directly (no bubblewrap) while still applying all bundled configs (skills, commands, generated `AGENTS.md`, merged `opencode.jsonc`, herdr and tuicr configs) from a temp tree instead of your host `~/.config`:
 
 1. A temp dir is created (`mktemp -d`) and added to the cleanup trap, so it is removed when the session ends.
 2. `~/.config` is mirrored into the temp tree, preserving your own configs (git, nix, opencode, tuicr, herdr, etc.), and made writable so overlays can replace read-only entries.
 3. The bundled defaults + enabled `--with-*` overlays are copied on top (bundle wins on name collisions), the merged `opencode.jsonc` and the generated `AGENTS.md` are placed there.
 4. Embedded config-dir references (`$HOME/.config/opencode/...`, `~/.config/opencode/...`) inside the copied files are rewritten to point into the temp tree.
-5. Env vars are set: `XDG_CONFIG_HOME` / `XDG_STATE_HOME` point at the temp tree, `OPENCODE_CONFIG_DIR`/`OPENCODE_CONFIG` at the merged config, `HERDR_CONFIG_PATH`/`HERDR_SOCKET_PATH` at the temp herdr config/socket.
+5. Env vars are set: `XDG_CONFIG_HOME` / `XDG_STATE_HOME` point at the temp tree, `OPENCODE_CONFIG_DIR`/`OPENCODE_CONFIG` at the merged config, `HERDR_CONFIG_PATH`/`HERDR_SOCKET_PATH` at the temp herdr config/socket, and `CLAUDE_CONFIG_DIR` at the host `~/.claude` (same as sandbox mode).
 
-Because everything lives in a temp dir, nothing persists after the session — skills, prompts, commands, config and herdr state all vanish on exit. The herdr server is stopped when the session ends (matching the sandbox, where `--die-with-parent` does this).
+Because the config lives in a temp dir, nothing persists after the session — skills, prompts, commands, config and herdr state all vanish on exit. The herdr server is stopped when the session ends (matching the sandbox, where `--die-with-parent` does this). Claude Code is the exception: its config dir is pinned to the host `~/.claude`, so auth, settings, transcripts and the deployed status line persist exactly as in sandbox mode.
 
 **Not enforceable without the sandbox** (warned on stderr):
 - `--no-net` cannot disable network access

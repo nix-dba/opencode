@@ -117,17 +117,19 @@ if [ "$NO_SANDBOX" != true ]; then
   mkdir -p "$HOME/.local/share/opencode"
   mkdir -p "$HOME/.local/state/opencode"
   mkdir -p "$HOME/.cache/opencode"
-  mkdir -p "$HOME/.claude"
+fi
 
-  # Claude Code keeps settings, credentials and .claude.json under
-  # CLAUDE_CONFIG_DIR. Point it at the host ~/.claude so auth, settings,
-  # trust decisions and transcripts survive restarts. A pre-existing
-  # ~/.claude.json is imported once, because relocating the config dir makes
-  # Claude look for it inside ~/.claude instead of the home directory.
-  if [ -f "$HOME/.claude.json" ] && [ ! -f "$HOME/.claude/.claude.json" ]; then
-    cp -f "$HOME/.claude.json" "$HOME/.claude/.claude.json"
-    chmod 600 "$HOME/.claude/.claude.json"
-  fi
+# Claude Code resolves its config dir from CLAUDE_CONFIG_DIR, falling back to
+# ~/.claude, and keeps global state in <dir>/.claude.json (it ignores
+# XDG_CONFIG_HOME). Pin it explicitly in both modes so an inherited value from
+# the parent shell cannot redirect it. A pre-existing ~/.claude.json is
+# imported once, because setting CLAUDE_CONFIG_DIR makes Claude look for it
+# inside ~/.claude instead of the home directory.
+CLAUDE_CFG_DIR="$HOME/.claude"
+mkdir -p "$CLAUDE_CFG_DIR"
+if [ -f "$HOME/.claude.json" ] && [ ! -f "$CLAUDE_CFG_DIR/.claude.json" ]; then
+  cp -f "$HOME/.claude.json" "$CLAUDE_CFG_DIR/.claude.json"
+  chmod 600 "$CLAUDE_CFG_DIR/.claude.json"
 fi
 
 # Temp files cleanup
@@ -139,8 +141,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # settings file, and never replaces a statusLine owned by something else.
 deploy_claude_statusline() {
   local src="${CLAUDE_STATUSLINE:-$SCRIPT_DIR/default/claude/statusline.sh}"
-  local dst="$HOME/.claude/statusline.sh"
-  local cfg="$HOME/.claude/settings.json"
+  local dst="$CLAUDE_CFG_DIR/statusline.sh"
+  local cfg="$CLAUDE_CFG_DIR/settings.json"
   # Literal ~ so the path stays home-relative inside Claude's settings.json.
   # shellcheck disable=SC2088
   local target='~/.claude/statusline.sh'
@@ -152,7 +154,7 @@ deploy_claude_statusline() {
     return 0
   fi
 
-  mkdir -p "$HOME/.claude" || return 0
+  mkdir -p "$CLAUDE_CFG_DIR" || return 0
   if [ -L "$cfg" ]; then
     cfg=$(readlink -f "$cfg") || return 0
   fi
@@ -565,6 +567,7 @@ if [ "$NO_SANDBOX" = true ]; then
   export XDG_CONFIG_HOME="$XDG_CFG"
   export XDG_STATE_HOME="$XDG_STATE"
   export OPENCODE_CONFIG_DIR="$CFG_BASE"
+  export CLAUDE_CONFIG_DIR="$CLAUDE_CFG_DIR"
   export HERDR_CONFIG_PATH="$XDG_CFG/herdr/config.toml"
   export HERDR_SOCKET_PATH="$XDG_CFG/herdr/herdr.sock"
   export TMPDIR=/tmp
@@ -585,6 +588,7 @@ if [ "$NO_SANDBOX" = true ]; then
     echo "opencode2 (no sandbox):"
     echo "  XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
     echo "  OPENCODE_CONFIG=$OPENCODE_CONFIG"
+    echo "  CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR"
     echo "  HERDR_CONFIG_PATH=$HERDR_CONFIG_PATH"
     echo "  HERDR_SOCKET_PATH=$HERDR_SOCKET_PATH"
     echo "  CMD: ${CMD[*]}"
@@ -670,7 +674,7 @@ BWRAP_ARGS=(
   --setenv HERDR_CONFIG_PATH "$HOME/.config/herdr/config.toml"
   --setenv TMPDIR /tmp
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
-  --setenv CLAUDE_CONFIG_DIR "$HOME/.claude"
+  --setenv CLAUDE_CONFIG_DIR "$CLAUDE_CFG_DIR"
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0
   --setenv CARGO_NET_OFFLINE false
   --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
