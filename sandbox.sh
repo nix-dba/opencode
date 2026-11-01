@@ -7,6 +7,7 @@ DO_VERBOSE=false
 NO_GIT_INIT=false
 WITH_FEATURES=()
 EXTRA_WORKSPACES=()
+RO_WORKSPACES=()
 MOUNT_SSH=true
 KEEP_SECRETS=true
 BIND_SERIAL_DEV=false
@@ -56,6 +57,14 @@ while [ "$#" -gt 0 ]; do
       EXTRA_WORKSPACES+=("$2")
       shift 2
       ;;
+    -r|--readonly)
+      if [ -z "$2" ]; then
+        echo "Error: --readonly requires a path argument" >&2
+        exit 1
+      fi
+      RO_WORKSPACES+=("$2")
+      shift 2
+      ;;
     --)
       shift
       break
@@ -89,6 +98,7 @@ Options:
   --no-sandbox              Run opencode2 directly without bubblewrap; configs are
                             mirrored into a temporary XDG_CONFIG_HOME
   -w, --workspace PATH      Bind additional workspace directory (can be repeated)
+  -r, --readonly PATH       Bind additional directory read-only (can be repeated)
 
 Apps:
   nix run .                Sandbox app (bare minimum dependencies)
@@ -333,6 +343,16 @@ for ws in "${WORKSPACES[@]}"; do
   fi
 done
 
+# Read-only binds (applied after workspace binds so they win on overlap)
+RO_WORKSPACE_BINDS=()
+for ro in "${RO_WORKSPACES[@]}"; do
+  if [ -d "$ro" ]; then
+    RO_WORKSPACE_BINDS+=(--ro-bind "$ro" "$ro")
+  else
+    echo "Warning: --readonly path '$ro' is not a directory; skipping." >&2
+  fi
+done
+
 # Guard: a workspace must not contain a protected system mount root. Such a bind
 # would shadow the sandbox's own system mounts (bwrap applies mounts in order,
 # and a later bind on an ancestor hides earlier child mounts). Workspaces that
@@ -340,7 +360,7 @@ done
 # are applied after the workspace binds and therefore win.
 if [ "$NO_SANDBOX" != true ]; then
   PROTECTED_ROOTS=(/ /usr /bin /lib /lib64 /sbin /nix /etc /proc /sys /dev /run)
-  for ws in "${WORKSPACES[@]}"; do
+  for ws in "${WORKSPACES[@]}" "${RO_WORKSPACES[@]}"; do
     [ -d "$ws" ] || continue
     ws_abs=$(cd "$ws" && pwd -P)
     for root in "${PROTECTED_ROOTS[@]}"; do
@@ -580,6 +600,7 @@ if [ "$NO_SANDBOX" = true ]; then
   [ "${#NET_ARGS[@]}" -eq 0 ] && echo "Warning: --no-net cannot be enforced without the sandbox." >&2
   [ "$MOUNT_SSH" = false ] && echo "Warning: --no-ssh-keys is a no-op without the sandbox (SSH is already accessible)." >&2
   [ "$BIND_SERIAL_DEV" = true ] && echo "Warning: --bind-serial-dev is a no-op without the sandbox (devices are already accessible)." >&2
+  [ "${#RO_WORKSPACES[@]}" -gt 0 ] && echo "Warning: --readonly is a no-op without the sandbox (directories are already writable)." >&2
   if [ "$KEEP_SECRETS" = false ]; then
     echo "Warning: --hide-secrets cannot be enforced without the sandbox: secrets/secret directories in workspaces are NOT hidden." >&2
   fi
@@ -649,6 +670,7 @@ BWRAP_ARGS=(
   # afterwards, so a workspace that is a parent of a config/state/ssh path
   # cannot shadow the prepared environment.
   "${WORKSPACE_BINDS[@]}"
+  "${RO_WORKSPACE_BINDS[@]}"
   # home bind mounts
   --bind-try "$HOME/.cache/opencode" "$HOME/.cache/opencode"
   --bind-try "$HOME/.local/share/opencode" "$HOME/.local/share/opencode"

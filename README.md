@@ -1,5 +1,8 @@
 # OpenCode
 
+> [!NOTE]
+> Development of this project continues in [nix-dba/agentbox](https://github.com/nix-dba/agentbox). This repository is no longer actively developed; please use the new repository for updates, issues and contributions.
+
 Sandboxed opencode2 environment with code intelligence, running via Nix with Bubblewrap isolation.
 
 ## Documentation

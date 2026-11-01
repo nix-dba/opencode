@@ -33,6 +33,7 @@ Defined in `sandbox.sh`:
 | `--no-net` | Disable network access in the sandbox |
 | `--no-sandbox` | Run opencode2 directly without bubblewrap. Configs are mirrored into a temporary `XDG_CONFIG_HOME` (see below) |
 | `-w`, `--workspace PATH` | Bind additional workspace directory (repeatable) |
+| `-r`, `--readonly PATH` | Bind additional directory read-only (repeatable) |
 
 ## Behavior
 
