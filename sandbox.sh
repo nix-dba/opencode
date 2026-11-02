@@ -698,6 +698,7 @@ BWRAP_ARGS=(
   --setenv OPENCODE_CONFIG_DIR "$HOME/.config/opencode"
   --setenv CLAUDE_CONFIG_DIR "$CLAUDE_CFG_DIR"
   --setenv NODE_TLS_REJECT_UNAUTHORIZED 0
+  --setenv CLAUDE_CODE_SUBAGENT_MODEL "sonnet"
   --setenv CARGO_NET_OFFLINE false
   --setenv SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
   --setenv NIX_SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
